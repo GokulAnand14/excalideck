@@ -73,9 +73,19 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
             initialData
               ? {
                   elements: initialData.elements,
-                  appState: { ...initialData.appState, theme },
+                  appState: {
+                    ...initialData.appState,
+                    theme,
+                    zoom: initialData.appState?.zoom?.value
+                      ? initialData.appState.zoom
+                      : { value: 1 },
+                  },
                   files: initialData.files,
-                  scrollToContent: true,
+                  scrollToContent: Boolean(
+                    initialData.elements &&
+                      initialData.elements.length > 0 &&
+                      initialData.appState?.scrollX === undefined
+                  ),
                 }
               : undefined
           }

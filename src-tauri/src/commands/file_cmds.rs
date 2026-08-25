@@ -71,7 +71,7 @@ pub fn create_drawing(name: String, folder: Option<String>, state: State<'_, Mut
     };
     let full_path = full_dir.join(&file_name);
     
-    let initial_content = r#"{"type":"excalidraw","version":2,"source":"excalideck","elements":[],"appState":{},"files":{}}"#;
+    let initial_content = r#"{"type":"excalidraw","version":2,"source":"excalideck","elements":[],"appState":{"zoom":{"value":1},"scrollX":0,"scrollY":0},"files":{}}"#;
     write_file_atomic(&full_path, initial_content)?;
     
     let rel_path = if clean_dir.is_empty() || clean_dir == "." {

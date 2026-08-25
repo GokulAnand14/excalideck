@@ -61,19 +61,42 @@ export const useExcalidrawBridge = () => {
         currentFileRef.current = path;
         setCurrentFile(path);
 
+        const hasElements = Array.isArray(elements) && elements.length > 0;
+        const rawZoom = appState?.zoom?.value ?? appState?.zoom;
+        const validZoom =
+          typeof rawZoom === "number" && !isNaN(rawZoom) && rawZoom > 0
+            ? Math.min(Math.max(rawZoom, 0.1), 3.0)
+            : 1;
+
+        const cleanAppState: Record<string, any> = {
+          ...appState,
+          isLoading: false,
+          zoom: { value: validZoom },
+          scrollX: typeof appState.scrollX === "number" ? appState.scrollX : 0,
+          scrollY: typeof appState.scrollY === "number" ? appState.scrollY : 0,
+        };
+
         // 3. Update scene in-place if Excalidraw API is already mounted
         if (excalidrawAPIRef.current) {
           excalidrawAPIRef.current.updateScene({
             elements,
-            appState: { ...appState, isLoading: false },
+            appState: cleanAppState,
             files,
             commitToHistory: false,
           });
           excalidrawAPIRef.current.history?.clear();
-          excalidrawAPIRef.current.scrollToContent(elements, { fitToViewport: true });
+
+          // If note has elements but no previous scroll coordinates, center it without zooming past 100%
+          if (hasElements && appState.scrollX === undefined && appState.scrollY === undefined) {
+            excalidrawAPIRef.current.scrollToContent(elements, {
+              fitToViewport: false,
+              maxZoom: 1,
+              animate: false,
+            });
+          }
         } else {
           // First load before Excalidraw mounts
-          setInitialData({ elements, appState, files });
+          setInitialData({ elements, appState: cleanAppState, files });
         }
       } catch (e) {
         console.error("Failed to load file", e);
@@ -93,6 +116,13 @@ export const useExcalidrawBridge = () => {
     lastSavedContentRef.current = "";
     if (excalidrawAPIRef.current) {
       excalidrawAPIRef.current.resetScene();
+      excalidrawAPIRef.current.updateScene({
+        appState: {
+          zoom: { value: 1 },
+          scrollX: 0,
+          scrollY: 0,
+        },
+      });
     }
   }, [flush]);
 
