@@ -101,26 +101,26 @@ Point Excalideck at any local folder on your machine, and it instantly turns tha
 <!-- FEATURES -->
 ## Features
 
-### 🗂️ Obsidian-Style Vaults & Hierarchies
-- Open any local directory as an independent sketch vault.
-- Create nested subfolders, organize drawings by project, and toggle directory trees with collapse/expand state preservation.
-- Instant search filter across all sketches in the active vault.
+### Vault-Centric File Management
+- **Local Directory Binding**: Select any folder on disk to serve as an isolated, self-contained sketching vault.
+- **Nested Hierarchies**: Organize diagrams in recursive subfolders with stateful directory expansion and collapse.
+- **Real-Time Vault Search**: Instant fuzzy filtering across your entire diagram collection.
 
-### 🖱️ Pointer-Driven Drag & Drop & Move Dialog
-- Re-architected virtual drag-and-drop engine that completely bypasses OS OLE quirks.
-- Drag sketches directly into subfolders with real-time cursor badges and drop target highlights.
-- Right-click context menu with a quick **"Move to..."** picker to relocate sketches across deep directories in one click.
+### Pointer-Driven Organization
+- **Native-Grade Drag & Drop**: Custom virtual pointer engine provides smooth cross-folder file moving with floating badges and drop-target highlighting.
+- **Direct Move Dialog**: Right-click context menu with a fast folder selector to relocate sketches across deep directory trees in one click.
 
-### ⚡ Instant Canvas Transitions
-- Excalidraw instance remains mounted in memory. Switching sketches invokes in-place scene updates via the bridge API instead of tearing down and recreating the WebGL/Canvas context.
-- Smooth empty state overlay when no document is active.
+### Zero-Latency In-Memory Transitions
+- **Persistent Canvas Lifecycle**: Retains the Excalidraw WebGL context in memory for instantaneous 0ms document switching without re-initialization flicker.
+- **Non-Destructive Scene Hydration**: In-place scene updates preserve canvas viewport state across file loads.
 
-### 🛡️ Atomic Auto-Save & Asset Extraction
-- Debounced auto-save with dirty-state hashing skips redundant disk writes.
-- Embedded image files in sketches are parsed in Rust, extracted to vault assets, and replaced with relative references to keep `.excalidraw` files lightweight.
+### Transactional File I/O & Asset Offloading
+- **Atomic Auto-Save**: Debounced disk writes with dirty-state hashing prevent redundant I/O cycles and file corruption.
+- **Asset Extraction Engine**: Background Rust worker extracts embedded base64 images into an isolated `assets/` directory, keeping primary `.excalidraw` JSON files lean and diff-friendly.
 
-### 🎨 Refined macOS-Inspired Interface
-- Authentic frameless titlebar with left-aligned window controls, central document status pills, and instant Dark / Light mode switching.
+### macOS-Inspired Frameless Shell
+- **Custom Desktop Titlebar**: Authentic left-aligned traffic controls, active document path breadcrumbs, and integrated dark/light theme switching.
+- **Minimal Resource Footprint**: Built on Tauri v2 for low memory overhead and native execution speed.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
