@@ -1,14 +1,14 @@
-use notify_debouncer_full::{new_debouncer, Debouncer, FileIdMap};
-use notify::{RecommendedWatcher, RecursiveMode};
-use std::time::Duration;
+use notify_debouncer_full::{new_debouncer_opt, Debouncer, NoCache};
+use notify::{Config, RecommendedWatcher, RecursiveMode};
 use std::path::Path;
+use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
 pub fn start_watcher(
     path: &Path,
     app_handle: AppHandle,
-) -> Result<Debouncer<RecommendedWatcher, FileIdMap>, String> {
-    let mut debouncer = new_debouncer(
+) -> Result<Debouncer<RecommendedWatcher, NoCache>, String> {
+    let mut debouncer = new_debouncer_opt::<_, RecommendedWatcher, NoCache>(
         Duration::from_millis(500),
         None,
         move |res: notify_debouncer_full::DebounceEventResult| {
@@ -50,6 +50,8 @@ pub fn start_watcher(
                 }
             }
         },
+        NoCache,
+        Config::default(),
     )
     .map_err(|e| e.to_string())?;
 

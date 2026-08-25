@@ -1,13 +1,12 @@
 use crate::config::AppConfig;
 use crate::vault::manager::Vault;
-use notify_debouncer_full::Debouncer;
+use notify_debouncer_full::{Debouncer, NoCache};
 use notify::RecommendedWatcher;
-use notify_debouncer_full::FileIdMap;
 
 pub struct AppState {
     pub vault: Option<Vault>,
     pub config: AppConfig,
-    pub watcher_handle: Option<Debouncer<RecommendedWatcher, FileIdMap>>,
+    pub watcher_handle: Option<Debouncer<RecommendedWatcher, NoCache>>,
 }
 
 impl AppState {
