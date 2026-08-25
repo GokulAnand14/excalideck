@@ -1,0 +1,122 @@
+.canvas-wrapper-root {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+}
+
+.canvas-container {
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.canvas-container.is-hidden {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.canvas-empty {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-primary);
+  height: 100%;
+  width: 100%;
+  padding: 32px;
+  position: relative;
+  z-index: 10;
+}
+
+.canvas-empty-card {
+  max-width: 420px;
+  text-align: center;
+  padding: 40px 32px;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.empty-logo-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.canvas-empty-card h2 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.empty-desc {
+  margin: 0 0 20px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.empty-create-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.empty-create-btn:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.empty-shortcuts {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  gap: 16px;
+}
+
+.shortcut-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shortcut-key {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shortcut-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}

@@ -1,0 +1,240 @@
+.titlebar {
+  height: var(--titlebar-height);
+  background-color: var(--bg-titlebar);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0 12px;
+  position: relative;
+  z-index: 100;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Left Section */
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
+/* Authentic macOS Traffic Lights */
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+  padding: 4px 0;
+}
+
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.1s ease, filter 0.15s ease;
+}
+
+.traffic-light.close {
+  background-color: #ff5f56;
+  border-color: #e0443e;
+}
+
+.traffic-light.minimize {
+  background-color: #ffbd2e;
+  border-color: #dea123;
+}
+
+.traffic-light.maximize {
+  background-color: #27c93f;
+  border-color: #1aab29;
+}
+
+.traffic-icon {
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  line-height: 1;
+  transition: opacity 0.1s ease;
+  pointer-events: none;
+}
+
+.traffic-lights:hover .traffic-icon {
+  opacity: 1;
+}
+
+.traffic-light:hover {
+  filter: brightness(0.95);
+}
+
+.traffic-light:active {
+  transform: scale(0.9);
+}
+
+.titlebar-divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--border-color);
+  margin: 0 2px;
+}
+
+/* Titlebar Buttons */
+.titlebar-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.titlebar-icon-btn:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.titlebar-icon-btn.active {
+  color: var(--accent-color);
+  background-color: var(--accent-subtle);
+}
+
+/* Vault Pill */
+.vault-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  max-width: 140px;
+}
+
+.vault-pill-logo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.vault-pill-btn:hover {
+  background: var(--active-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.vault-pill-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Center Section */
+.titlebar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+}
+
+.doc-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  color: var(--text-primary);
+  font-weight: 500;
+  max-width: 320px;
+}
+
+.doc-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+.doc-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-ext {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.app-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.app-badge-logo-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+/* Right Section */
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.titlebar-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.titlebar-action-btn.primary {
+  background: var(--accent-color);
+  color: #ffffff;
+}
+
+.titlebar-action-btn.primary:hover {
+  background: var(--accent-hover);
+}
