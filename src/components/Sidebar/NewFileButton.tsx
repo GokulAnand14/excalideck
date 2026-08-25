@@ -1,13 +1,22 @@
 import React from "react";
+import { useDialog } from "../../context/DialogContext";
 
 interface NewFileButtonProps {
   onCreateDrawing: (name: string, folder?: string) => void;
-  rootPath: string;
+  rootPath?: string;
 }
 
-export const NewFileButton: React.FC<NewFileButtonProps> = ({ onCreateDrawing, rootPath }) => {
-  const handleClick = () => {
-    const name = prompt("New drawing name:");
+export const NewFileButton: React.FC<NewFileButtonProps> = ({ onCreateDrawing }) => {
+  const { promptDialog } = useDialog();
+
+  const handleClick = async () => {
+    const name = await promptDialog({
+      title: "Create New Drawing",
+      placeholder: "Untitled",
+      defaultValue: "Untitled",
+      confirmText: "Create",
+      icon: "✏️",
+    });
     if (name) {
       onCreateDrawing(name);
     }

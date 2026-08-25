@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Excalidraw, MainMenu, WelcomeScreen } from "@excalidraw/excalidraw";
+import { useDialog } from "../../context/DialogContext";
 import { IconFileDrawing, IconNewFile } from "../common/Icons";
 import "@excalidraw/excalidraw/index.css";
 import "./Canvas.css";
@@ -27,13 +28,20 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
   onCreateDrawing,
   onAPIMount,
 }) => {
+  const { promptDialog } = useDialog();
   const excalidrawAPIRef = useRef<any>(null);
 
-  const handleQuickCreate = () => {
+  const handleQuickCreate = async () => {
     if (onCreateDrawing) {
-      const name = prompt("Enter drawing name:", "Untitled");
-      if (name && name.trim()) {
-        onCreateDrawing(name.trim());
+      const name = await promptDialog({
+        title: "Create New Drawing",
+        placeholder: "Untitled",
+        defaultValue: "Untitled",
+        confirmText: "Create",
+        icon: "✏️",
+      });
+      if (name) {
+        onCreateDrawing(name);
       }
     }
   };

@@ -1,5 +1,3 @@
-<a id="readme-top"></a>
-
 <!-- PROJECT SHIELDS -->
 <div align="center">
 
@@ -44,9 +42,10 @@
   <summary><strong>Table of Contents</strong></summary>
   <ol>
     <li><a href="#about-the-project">About The Project</a></li>
+    <li><a href="#downloads--platforms">Downloads & Platforms</a></li>
     <li><a href="#built-with">Built With</a></li>
-    <li><a href="#features">Key Features</a></li>
-    <li><a href="#architecture">Architecture & Data Model</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#architecture--data-model">Architecture & Data Model</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -62,6 +61,19 @@
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
+
+---
+
+<!-- DOWNLOADS -->
+## Downloads & Platforms
+
+Pre-compiled native binaries and installers for all major desktop operating systems are available directly on [GitHub Releases][releases-url].
+
+| Platform | Architecture | Available Formats | Download Link |
+| :--- | :--- | :--- | :--- |
+| ![Windows][win-badge] **Windows** | `x64` / `x86_64` | `.msi` (Windows Installer)<br>`.exe` (NSIS Setup / Portable) | [**Download Windows**][releases-url] |
+| ![macOS][mac-badge] **macOS** | Apple Silicon (`arm64`)<br>Intel (`x86_64`) | `.dmg` (Disk Image)<br>`.app` (Universal Binary) | [**Download macOS**][releases-url] |
+| ![Linux][linux-badge] **Linux** | `x86_64` | `.AppImage` (Universal Linux)<br>`.deb` (Debian / Ubuntu) | [**Download Linux**][releases-url] |
 
 ---
 
@@ -81,8 +93,6 @@ Point Excalideck at any local folder on your machine, and it instantly turns tha
 - **Atomic Persistence**: Auto-saves happen in the background using native Rust file I/O with transactional safety to prevent canvas corruption.
 - **Self-Contained Assets**: Heavy embedded image blobs are extracted and isolated into a `.assets/` directory in the background, keeping your primary sketch files clean and diff-friendly.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
 ### Built With
@@ -93,8 +103,6 @@ Point Excalideck at any local folder on your machine, and it instantly turns tha
 * [![Vite][Vite-badge]][vite-url] — High-speed frontend tooling & bundling
 * [![Rust][Rust-badge]][rust-url] — High-throughput file system watcher & IO engine
 * [![Excalidraw][Excalidraw-badge]][excalidraw-url] — Canvas engine & drawing primitives
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -121,8 +129,6 @@ Point Excalideck at any local folder on your machine, and it instantly turns tha
 ### macOS-Inspired Frameless Shell
 - **Custom Desktop Titlebar**: Authentic left-aligned traffic controls, active document path breadcrumbs, and integrated dark/light theme switching.
 - **Minimal Resource Footprint**: Built on Tauri v2 for low memory overhead and native execution speed.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -152,8 +158,6 @@ Point Excalideck at any local folder on your machine, and it instantly turns tha
 │      └─ c8f9d0...png                                        │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -214,8 +218,6 @@ bun run tauri build
 
 The output installers (`.msi` / `.exe` on Windows, `.dmg` / `.app` on macOS, `.AppImage` / `.deb` on Linux) will be generated in `src-tauri/target/release/bundle/`.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
 <!-- VAULT STRUCTURE -->
@@ -240,8 +242,6 @@ my-sketch-vault/
 - **`.excalidraw` Files**: Standard JSON files containing Excalidraw element trees, bindings, and app state.
 - **`assets/` Directory**: Created automatically when images or external media are pasted into canvases.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
 <!-- ROADMAP -->
@@ -256,8 +256,6 @@ my-sketch-vault/
 - [ ] **Multi-Tab Support**: Tab bar for having multiple sketches open concurrently.
 - [ ] **Canvas Search & OCR**: Full-text search across shapes and text elements inside vault sketches.
 - [ ] **PDF & Markdown Export**: Batch export folders of sketches to multi-page PDFs or Markdown embeds.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -274,16 +272,12 @@ If you have an idea, improvement, or bug fix:
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ---
 
 <!-- LICENSE -->
 ## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -296,8 +290,6 @@ Excalideck is built on top of incredible open-source foundations. Huge thanks an
 * [Tauri](https://github.com/tauri-apps/tauri) — For the memory-efficient and secure cross-platform application framework.
 * [Obsidian](https://obsidian.md) — For inspiring the local-first, markdown/vault philosophy.
 * [Vite](https://vitejs.dev/) & [React](https://react.dev/) — For frontend developer experience and performance.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN BADGES & URLS -->
 [tauri-shield]: https://img.shields.io/badge/Tauri-v2.0-24C8DB?style=for-the-badge&logo=tauri&logoColor=white
@@ -320,3 +312,8 @@ Excalideck is built on top of incredible open-source foundations. Huge thanks an
 [Rust-badge]: https://img.shields.io/badge/Rust-DEA584?style=flat-square&logo=rust&logoColor=black
 [Excalidraw-badge]: https://img.shields.io/badge/Excalidraw-6965DB?style=flat-square&logo=excalidraw&logoColor=white
 [excalidraw-url]: https://github.com/excalidraw/excalidraw
+
+[win-badge]: https://img.shields.io/badge/Windows-0078D6?style=flat-square&logo=windows&logoColor=white
+[mac-badge]: https://img.shields.io/badge/macOS-000000?style=flat-square&logo=apple&logoColor=white
+[linux-badge]: https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black
+[releases-url]: https://github.com/GokulAnand14/excalideck/releases

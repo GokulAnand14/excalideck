@@ -1,6 +1,7 @@
 import React from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { IconSidebar, IconSun, IconMoon, IconVault, IconNewFile } from "../common/Icons";
+import { useDialog } from "../../context/DialogContext";
+import { IconSidebar, IconSun, IconMoon, IconNewFile } from "../common/Icons";
 import "./Titlebar.css";
 
 interface TitlebarProps {
@@ -24,6 +25,8 @@ export const Titlebar: React.FC<TitlebarProps> = ({
   onOpenVaultPicker,
   onCreateDrawing,
 }) => {
+  const { promptDialog } = useDialog();
+
   const handleMinimize = async () => {
     try {
       const appWindow = getCurrentWindow();
@@ -51,11 +54,17 @@ export const Titlebar: React.FC<TitlebarProps> = ({
     }
   };
 
-  const handleNewDrawing = () => {
+  const handleNewDrawing = async () => {
     if (onCreateDrawing) {
-      const name = prompt("Enter new drawing name:", "Untitled");
-      if (name && name.trim()) {
-        onCreateDrawing(name.trim());
+      const name = await promptDialog({
+        title: "Create New Drawing",
+        placeholder: "Untitled",
+        defaultValue: "Untitled",
+        confirmText: "Create",
+        icon: "✏️",
+      });
+      if (name) {
+        onCreateDrawing(name);
       }
     }
   };
@@ -139,7 +148,7 @@ export const Titlebar: React.FC<TitlebarProps> = ({
           <button
             className="titlebar-action-btn primary"
             onClick={handleNewDrawing}
-            title="New Drawing (Ctrl+N)"
+            title="New Drawing"
           >
             <IconNewFile size={14} />
             <span>New</span>

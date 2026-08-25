@@ -3,7 +3,8 @@ import { FileTree } from "./FileTree";
 import { FileTreeNode } from "../../types/fileTree";
 import { DragGhost } from "./DragGhost";
 import { MoveModal } from "./MoveModal";
-import { IconNewFile, IconNewFolder, IconSearch, IconVault } from "../common/Icons";
+import { useDialog } from "../../context/DialogContext";
+import { IconNewFile, IconNewFolder, IconSearch } from "../common/Icons";
 import "./Sidebar.css";
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMoveFile,
   onOpenVaultPicker,
 }) => {
+  const { promptDialog } = useDialog();
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
 
@@ -181,17 +183,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
   }, [collapsedFolders, onMoveFile]);
 
-  const handleNewFile = () => {
-    const name = prompt("Enter drawing name:", "Untitled");
-    if (name && name.trim()) {
-      onCreateDrawing(name.trim());
+  const handleNewFile = async () => {
+    const name = await promptDialog({
+      title: "Create New Drawing",
+      subtitle: "Inside vault root",
+      placeholder: "Untitled",
+      defaultValue: "Untitled",
+      confirmText: "Create",
+      icon: "✏️",
+    });
+    if (name) {
+      onCreateDrawing(name);
     }
   };
 
-  const handleNewFolder = () => {
-    const name = prompt("Enter folder name:", "New Folder");
-    if (name && name.trim()) {
-      onCreateFolder(name.trim());
+  const handleNewFolder = async () => {
+    const name = await promptDialog({
+      title: "Create New Folder",
+      subtitle: "Inside vault root",
+      placeholder: "New Folder",
+      defaultValue: "New Folder",
+      confirmText: "Create Folder",
+      icon: "📁",
+    });
+    if (name) {
+      onCreateFolder(name);
     }
   };
 

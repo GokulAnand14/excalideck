@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FileTreeNode } from "../../types/fileTree";
 import { ContextMenu, ContextMenuItem } from "../common/ContextMenu";
+import { useDialog } from "../../context/DialogContext";
 import {
   IconChevronDown,
   IconChevronRight,
@@ -44,6 +45,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
   onItemPointerDown,
   level,
 }) => {
+  const { promptDialog, confirmDialog } = useDialog();
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -75,22 +77,36 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
   };
 
   // Quick Action Buttons on hover
-  const handleQuickNewFile = (e: React.MouseEvent) => {
+  const handleQuickNewFile = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const name = prompt("Enter drawing name in this folder:", "Untitled");
-    if (name && name.trim()) {
-      onCreateDrawing(name.trim(), node.path);
+    const name = await promptDialog({
+      title: "Create New Drawing",
+      subtitle: `Inside folder: /${node.path}`,
+      placeholder: "Untitled",
+      defaultValue: "Untitled",
+      confirmText: "Create",
+      icon: "✏️",
+    });
+    if (name) {
+      onCreateDrawing(name, node.path);
       if (!isExpanded) {
         onToggleExpand(node.path);
       }
     }
   };
 
-  const handleQuickNewFolder = (e: React.MouseEvent) => {
+  const handleQuickNewFolder = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const name = prompt("Enter subfolder name:", "Subfolder");
-    if (name && name.trim()) {
-      onCreateFolder(`${node.path}/${name.trim()}`);
+    const name = await promptDialog({
+      title: "Create New Subfolder",
+      subtitle: `Inside parent: /${node.path}`,
+      placeholder: "Subfolder",
+      defaultValue: "Subfolder",
+      confirmText: "Create Subfolder",
+      icon: "📁",
+    });
+    if (name) {
+      onCreateFolder(`${node.path}/${name}`);
       if (!isExpanded) {
         onToggleExpand(node.path);
       }
@@ -105,10 +121,17 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
       {
         label: "New Drawing",
         icon: "✏️",
-        onClick: () => {
-          const name = prompt("Enter drawing name:", "Untitled");
-          if (name && name.trim()) {
-            onCreateDrawing(name.trim(), node.path);
+        onClick: async () => {
+          const name = await promptDialog({
+            title: "Create New Drawing",
+            subtitle: `Inside folder: /${node.path}`,
+            placeholder: "Untitled",
+            defaultValue: "Untitled",
+            confirmText: "Create",
+            icon: "✏️",
+          });
+          if (name) {
+            onCreateDrawing(name, node.path);
             if (!isExpanded) {
               onToggleExpand(node.path);
             }
@@ -118,10 +141,17 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
       {
         label: "New Subfolder",
         icon: "📁",
-        onClick: () => {
-          const name = prompt("Enter subfolder name:", "Subfolder");
-          if (name && name.trim()) {
-            onCreateFolder(`${node.path}/${name.trim()}`);
+        onClick: async () => {
+          const name = await promptDialog({
+            title: "Create New Subfolder",
+            subtitle: `Inside parent: /${node.path}`,
+            placeholder: "Subfolder",
+            defaultValue: "Subfolder",
+            confirmText: "Create Subfolder",
+            icon: "📁",
+          });
+          if (name) {
+            onCreateFolder(`${node.path}/${name}`);
             if (!isExpanded) {
               onToggleExpand(node.path);
             }
@@ -142,11 +172,17 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
     {
       label: "Rename",
       icon: "🏷️",
-      onClick: () => {
+      onClick: async () => {
         const currentCleanName = node.name.replace(".excalidraw", "");
-        const newName = prompt("Enter new name:", currentCleanName);
-        if (newName && newName.trim() && newName.trim() !== currentCleanName) {
-          const finalName = isFolder ? newName.trim() : `${newName.trim()}.excalidraw`;
+        const newName = await promptDialog({
+          title: isFolder ? "Rename Folder" : "Rename Drawing",
+          placeholder: currentCleanName,
+          defaultValue: currentCleanName,
+          confirmText: "Rename",
+          icon: "🏷️",
+        });
+        if (newName && newName !== currentCleanName) {
+          const finalName = isFolder ? newName : `${newName}.excalidraw`;
           onRenameFile(node.path, finalName);
         }
       },
@@ -155,8 +191,15 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
       label: "Delete",
       icon: "🗑️",
       danger: true,
-      onClick: () => {
-        if (confirm(`Are you sure you want to delete "${node.name}"?`)) {
+      onClick: async () => {
+        const confirmed = await confirmDialog({
+          title: isFolder ? "Delete Folder" : "Delete Drawing",
+          message: `Are you sure you want to delete "${node.name}"? This action cannot be undone.`,
+          danger: true,
+          confirmText: "Delete",
+          icon: "🗑️",
+        });
+        if (confirmed) {
           onDeleteFile(node.path);
         }
       },

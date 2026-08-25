@@ -1,5 +1,6 @@
 import React from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { useDialog } from "../../context/DialogContext";
 import { RecentVault } from "../../types/vault";
 import { IconFolderOpen, IconNewFolder, IconVault } from "../common/Icons";
 import "./VaultPicker.css";
@@ -19,6 +20,8 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
   onCreateVault,
   onClose,
 }) => {
+  const { promptDialog } = useDialog();
+
   const handleOpenExisting = async () => {
     try {
       const selected = await openDialog({
@@ -42,9 +45,16 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
         title: "Select Parent Folder for New Vault",
       });
       if (selected && typeof selected === "string") {
-        const name = prompt("Enter vault name:", "My Sketches");
-        if (name && name.trim()) {
-          onCreateVault(selected, name.trim());
+        const name = await promptDialog({
+          title: "Create New Vault",
+          subtitle: `Location: ${selected}`,
+          placeholder: "My Sketches",
+          defaultValue: "My Sketches",
+          confirmText: "Create Vault",
+          icon: "✨",
+        });
+        if (name) {
+          onCreateVault(selected, name);
         }
       }
     } catch (e) {
