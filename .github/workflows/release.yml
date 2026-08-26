@@ -19,11 +19,8 @@ jobs:
             target: "x86_64-pc-windows-msvc"
             args: ""
           - platform: "macos-latest"
-            target: "aarch64-apple-darwin"
-            args: ""
-          - platform: "macos-13"
-            target: "x86_64-apple-darwin"
-            args: ""
+            target: "universal-apple-darwin"
+            args: "--target universal-apple-darwin"
           - platform: "ubuntu-22.04"
             target: "x86_64-unknown-linux-gnu"
             args: ""
@@ -42,6 +39,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
 
       - name: Install Linux system dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -64,6 +66,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
           releaseName: "Excalideck v__VERSION__"
@@ -72,6 +76,7 @@ jobs:
 
             ### What's New:
             - **Local Vault Storage**: Obsidian-style directory management for `.excalidraw` sketches.
+            - **In-App Auto-Updater**: Instant in-app update checks and hot restarts.
             - **Zero-Latency In-Memory Transitions**: Instant switching between drawings without canvas teardown.
             - **Atomic Background Auto-Save & Asset Extraction**: Automatic deduplication and safe writes in Rust.
             - **Virtual Pointer Drag & Drop**: Smooth organization into subfolders with custom modals.
