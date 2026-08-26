@@ -22,20 +22,28 @@ const App: React.FC = () => {
     deleteFile,
     renameFile,
     moveFile,
-  } = useFileTree(vaultOpen);
+  } = useFileTree(activeVault?.path);
 
-  const { currentFile, initialData, loadFile, triggerSave, setExcalidrawAPI } =
-    useExcalidrawBridge();
+  const {
+    currentFile,
+    initialData,
+    loadFile,
+    closeFile,
+    triggerSave,
+    setExcalidrawAPI,
+  } = useExcalidrawBridge();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showVaultPickerModal, setShowVaultPickerModal] = useState(false);
 
   const handleOpenVault = async (path: string) => {
+    await closeFile();
     await openVault(path);
     setShowVaultPickerModal(false);
   };
 
   const handleCreateVault = async (path: string, name: string) => {
+    await closeFile();
     await createVault(path, name);
     setShowVaultPickerModal(false);
   };

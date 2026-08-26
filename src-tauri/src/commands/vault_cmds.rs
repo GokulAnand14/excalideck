@@ -18,6 +18,8 @@ pub fn open_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri::A
     let info = vault.get_info();
     
     let mut state_guard = state.lock().unwrap();
+    // Cleanly unbind prior watcher before attaching new vault watcher
+    state_guard.watcher_handle = None;
     state_guard.vault = Some(vault);
     
     if let Ok(watcher) = start_watcher(&path_buf, app) {

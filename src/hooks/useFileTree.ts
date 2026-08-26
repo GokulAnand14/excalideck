@@ -3,11 +3,11 @@ import { FileTreeNode } from "../types/fileTree";
 import { getFileTree, createDrawing, createFolder, deleteFile, renameFile, moveFile } from "../lib/tauri";
 import { useFileWatcher } from "./useFileWatcher";
 
-export const useFileTree = (vaultOpen: boolean) => {
+export const useFileTree = (activeVaultPath?: string | null) => {
   const [tree, setTree] = useState<FileTreeNode | null>(null);
 
   const fetchTree = useCallback(async () => {
-    if (!vaultOpen) {
+    if (!activeVaultPath) {
       setTree(null);
       return;
     }
@@ -16,15 +16,16 @@ export const useFileTree = (vaultOpen: boolean) => {
       setTree(fileTree);
     } catch (e) {
       console.error("Failed to fetch tree:", e);
+      setTree(null);
     }
-  }, [vaultOpen]);
+  }, [activeVaultPath]);
 
   useEffect(() => {
     fetchTree();
   }, [fetchTree]);
 
   // Hook into file watcher with stable callback
-  useFileWatcher(fetchTree, vaultOpen);
+  useFileWatcher(fetchTree, !!activeVaultPath);
 
   const handleCreateDrawing = async (name: string, folder?: string) => {
     try {
