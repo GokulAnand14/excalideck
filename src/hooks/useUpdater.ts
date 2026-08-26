@@ -25,7 +25,9 @@ export const useUpdater = () => {
     setIsChecking(true);
     setError(null);
     try {
+      console.log("[Updater] Checking for updates...");
       const update = await check();
+      console.log("[Updater] Check result:", update);
       if (update?.available) {
         pendingUpdateRef.current = update;
         setUpdateState({
@@ -40,8 +42,8 @@ export const useUpdater = () => {
         setUpdateState(null);
       }
     } catch (e: any) {
+      console.warn("[Updater] Check error:", e);
       if (!silent) {
-        console.error("Failed to check for updates", e);
         setError(e?.message || "Failed to check for updates");
       }
     } finally {
@@ -83,7 +85,7 @@ export const useUpdater = () => {
       // Restart app with newly installed binary
       await relaunch();
     } catch (e: any) {
-      console.error("Failed to download or install update", e);
+      console.error("[Updater] Install failed:", e);
       setError(e?.message || "Failed to install update. Please try again.");
       setIsDownloading(false);
     }
@@ -94,11 +96,11 @@ export const useUpdater = () => {
     pendingUpdateRef.current = null;
   }, []);
 
-  // Check silently on application mount (delayed by 3s to not block initial render)
+  // Check silently on application mount (delayed by 2s)
   useEffect(() => {
     const timer = window.setTimeout(() => {
       checkForUpdates(true);
-    }, 3000);
+    }, 2000);
     return () => window.clearTimeout(timer);
   }, [checkForUpdates]);
 
