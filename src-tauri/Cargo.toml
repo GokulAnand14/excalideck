@@ -1,6 +1,6 @@
 [package]
 name = "excalideck"
-version = "0.1.0"
+version = "0.1.1"
 description = "Excalidraw desktop app with Obsidian-like vault save system"
 authors = ["Gokul"]
 edition = "2021"
