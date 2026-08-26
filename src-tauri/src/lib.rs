@@ -30,6 +30,8 @@ pub fn run() {
         .manage(Mutex::new(app_state))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             commands::vault_cmds::open_vault,
             commands::vault_cmds::create_vault,

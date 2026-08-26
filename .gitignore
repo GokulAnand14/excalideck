@@ -21,6 +21,8 @@ Thumbs.db
 # Bun
 bun.lockb
 
-# Environment
+# Environment & Keys
 .env
 .env.*
+*.key
+*.key.pub

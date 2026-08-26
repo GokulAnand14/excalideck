@@ -3,10 +3,12 @@ import { Titlebar } from "./components/Titlebar/Titlebar";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { ExcalidrawWrapper } from "./components/Canvas/ExcalidrawWrapper";
 import { VaultPicker } from "./components/VaultPicker/VaultPicker";
+import { UpdateModal } from "./components/common/UpdateModal";
 import { useVault } from "./hooks/useVault";
 import { useFileTree } from "./hooks/useFileTree";
 import { useExcalidrawBridge } from "./hooks/useExcalidrawBridge";
 import { useTheme } from "./hooks/useTheme";
+import { useUpdater } from "./hooks/useUpdater";
 import "./App.css";
 
 const App: React.FC = () => {
@@ -32,6 +34,17 @@ const App: React.FC = () => {
     triggerSave,
     setExcalidrawAPI,
   } = useExcalidrawBridge();
+
+  const {
+    updateState,
+    isDownloading,
+    downloadProgress,
+    downloadedBytes,
+    downloadTotal,
+    error: updateError,
+    downloadAndInstall,
+    dismissUpdate,
+  } = useUpdater();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showVaultPickerModal, setShowVaultPickerModal] = useState(false);
@@ -133,6 +146,20 @@ const App: React.FC = () => {
           onOpenVault={handleOpenVault}
           onCreateVault={handleCreateVault}
           onClose={() => setShowVaultPickerModal(false)}
+        />
+      )}
+
+      {/* Auto-Updater Modal Prompt */}
+      {updateState && (
+        <UpdateModal
+          update={updateState}
+          isDownloading={isDownloading}
+          progress={downloadProgress}
+          downloadedBytes={downloadedBytes}
+          totalBytes={downloadTotal}
+          error={updateError}
+          onInstall={downloadAndInstall}
+          onDismiss={dismissUpdate}
         />
       )}
     </div>
