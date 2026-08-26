@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Excalidraw, MainMenu, WelcomeScreen } from "@excalidraw/excalidraw";
 import { useDialog } from "../../context/DialogContext";
-import { IconFileDrawing, IconNewFile } from "../common/Icons";
+import { IconNewFile } from "../common/Icons";
 import "@excalidraw/excalidraw/index.css";
 import "./Canvas.css";
 
@@ -48,6 +48,12 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
 
   const handleAPIMount = (api: any) => {
     excalidrawAPIRef.current = api;
+    if (initialData?.files) {
+      const fileValues = Object.values(initialData.files).filter(Boolean) as any[];
+      if (fileValues.length > 0) {
+        api.addFiles(fileValues);
+      }
+    }
     if (onAPIMount) {
       onAPIMount(api);
     }

@@ -23,7 +23,11 @@ export const useExcalidrawBridge = () => {
       const file = currentFileRef.current;
       if (!file || isSwitchingRef.current) return;
       try {
-        const content = serializeAsJSON(elements as any, appState, files, "local");
+        // Merge files from callback and excalidrawAPI instance if available
+        const apiFiles = excalidrawAPIRef.current?.getFiles() || {};
+        const mergedFiles = { ...apiFiles, ...(files || {}) };
+        const content = serializeAsJSON(elements as any, appState, mergedFiles, "local");
+        
         // Skip disk write if content is unchanged
         if (content === lastSavedContentRef.current) return;
         lastSavedContentRef.current = content;
@@ -78,10 +82,15 @@ export const useExcalidrawBridge = () => {
 
         // 3. Update scene in-place if Excalidraw API is already mounted
         if (excalidrawAPIRef.current) {
+          // CRITICAL: Feed binary files to Excalidraw's binary file cache first!
+          const fileValues = Object.values(files).filter(Boolean) as any[];
+          if (fileValues.length > 0) {
+            excalidrawAPIRef.current.addFiles(fileValues);
+          }
+
           excalidrawAPIRef.current.updateScene({
             elements,
             appState: cleanAppState,
-            files,
             commitToHistory: false,
           });
           excalidrawAPIRef.current.history?.clear();
