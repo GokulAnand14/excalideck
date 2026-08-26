@@ -10,14 +10,21 @@ const rootDir = path.resolve(__dirname, "..");
 const newVersion = process.argv[2];
 
 if (!newVersion || !/^\d+\.\d+\.\d+.*$/.test(newVersion)) {
-  console.error("❌ Please provide a valid version number (e.g. bun run release 0.1.3)");
+  console.error("❌ Please provide a valid version number (e.g. bun run release 0.1.4)");
   process.exit(1);
 }
 
 const tag = `v${newVersion.replace(/^v/, "")}`;
 const cleanVersion = newVersion.replace(/^v/, "");
 
-console.log(`🚀 Preparing release for ${tag} (version ${cleanVersion})...\n`);
+console.log(`🚀 Syncing with remote repository...`);
+try {
+  execSync(`git pull --rebase origin main`, { cwd: rootDir, stdio: "inherit" });
+} catch (e) {
+  console.warn("⚠️ Could not pull rebase from remote, continuing with local state...");
+}
+
+console.log(`\n🚀 Preparing release for ${tag} (version ${cleanVersion})...\n`);
 
 // 1. Update package.json
 const pkgPath = path.join(rootDir, "package.json");
@@ -54,7 +61,7 @@ try {
   execSync(`git tag ${tag}`, { cwd: rootDir, stdio: "inherit" });
   execSync(`git push origin main`, { cwd: rootDir, stdio: "inherit" });
   execSync(`git push origin ${tag}`, { cwd: rootDir, stdio: "inherit" });
-  console.log(`\n🎉 Successfully pushed ${tag} to GitHub!`);
+  console.log(`\n🎉 Successfully published ${tag} to GitHub!`);
   console.log(`Live build: https://github.com/GokulAnand14/excalideck/actions\n`);
 } catch (e) {
   console.error("❌ Git operation failed:", e.message);
