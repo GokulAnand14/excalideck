@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 export interface ContextMenuItem {
   label: string;
   onClick: () => void;
-  icon?: string;
+  icon?: React.ReactNode;
   danger?: boolean;
 }
 

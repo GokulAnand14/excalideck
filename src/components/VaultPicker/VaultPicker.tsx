@@ -2,7 +2,7 @@ import React from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useDialog } from "../../context/DialogContext";
 import { RecentVault } from "../../types/vault";
-import { IconFolderOpen, IconNewFolder, IconVault } from "../common/Icons";
+import { IconFolderOpen, IconNewFolder, IconVault, IconSparkles } from "../common/Icons";
 import "./VaultPicker.css";
 
 interface VaultPickerProps {
@@ -51,7 +51,7 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
           placeholder: "My Sketches",
           defaultValue: "My Sketches",
           confirmText: "Create Vault",
-          icon: "✨",
+          icon: <IconSparkles size={16} />,
         });
         if (name) {
           onCreateVault(selected, name);

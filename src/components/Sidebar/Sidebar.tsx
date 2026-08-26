@@ -190,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       placeholder: "Untitled",
       defaultValue: "Untitled",
       confirmText: "Create",
-      icon: "✏️",
+      icon: <IconNewFile size={16} />,
     });
     if (name) {
       onCreateDrawing(name);
@@ -204,7 +204,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       placeholder: "New Folder",
       defaultValue: "New Folder",
       confirmText: "Create Folder",
-      icon: "📁",
+      icon: <IconNewFolder size={16} />,
     });
     if (name) {
       onCreateFolder(name);

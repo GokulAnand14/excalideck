@@ -61,7 +61,7 @@ export const Titlebar: React.FC<TitlebarProps> = ({
         placeholder: "Untitled",
         defaultValue: "Untitled",
         confirmText: "Create",
-        icon: "✏️",
+        icon: <IconNewFile size={16} />,
       });
       if (name) {
         onCreateDrawing(name);

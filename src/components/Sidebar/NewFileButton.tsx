@@ -1,5 +1,6 @@
 import React from "react";
 import { useDialog } from "../../context/DialogContext";
+import { IconNewFile } from "../common/Icons";
 
 interface NewFileButtonProps {
   onCreateDrawing: (name: string, folder?: string) => void;
@@ -15,7 +16,7 @@ export const NewFileButton: React.FC<NewFileButtonProps> = ({ onCreateDrawing })
       placeholder: "Untitled",
       defaultValue: "Untitled",
       confirmText: "Create",
-      icon: "✏️",
+      icon: <IconNewFile size={16} />,
     });
     if (name) {
       onCreateDrawing(name);

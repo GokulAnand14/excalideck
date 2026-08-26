@@ -10,6 +10,9 @@ import {
   IconFileDrawing,
   IconNewFile,
   IconNewFolder,
+  IconMove,
+  IconTag,
+  IconTrash,
 } from "../common/Icons";
 
 interface FileTreeItemProps {
@@ -85,7 +88,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
       placeholder: "Untitled",
       defaultValue: "Untitled",
       confirmText: "Create",
-      icon: "✏️",
+      icon: <IconNewFile size={16} />,
     });
     if (name) {
       onCreateDrawing(name, node.path);
@@ -103,7 +106,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
       placeholder: "Subfolder",
       defaultValue: "Subfolder",
       confirmText: "Create Subfolder",
-      icon: "📁",
+      icon: <IconNewFolder size={16} />,
     });
     if (name) {
       onCreateFolder(`${node.path}/${name}`);
@@ -120,7 +123,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
     menuItems.push(
       {
         label: "New Drawing",
-        icon: "✏️",
+        icon: <IconNewFile size={14} />,
         onClick: async () => {
           const name = await promptDialog({
             title: "Create New Drawing",
@@ -128,7 +131,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
             placeholder: "Untitled",
             defaultValue: "Untitled",
             confirmText: "Create",
-            icon: "✏️",
+            icon: <IconNewFile size={16} />,
           });
           if (name) {
             onCreateDrawing(name, node.path);
@@ -140,7 +143,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
       },
       {
         label: "New Subfolder",
-        icon: "📁",
+        icon: <IconNewFolder size={14} />,
         onClick: async () => {
           const name = await promptDialog({
             title: "Create New Subfolder",
@@ -148,7 +151,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
             placeholder: "Subfolder",
             defaultValue: "Subfolder",
             confirmText: "Create Subfolder",
-            icon: "📁",
+            icon: <IconNewFolder size={16} />,
           });
           if (name) {
             onCreateFolder(`${node.path}/${name}`);
@@ -164,14 +167,14 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
   menuItems.push(
     {
       label: "Move to...",
-      icon: "📦",
+      icon: <IconMove size={14} />,
       onClick: () => {
         onOpenMoveModal(node.path, isFolder);
       },
     },
     {
       label: "Rename",
-      icon: "🏷️",
+      icon: <IconTag size={14} />,
       onClick: async () => {
         const currentCleanName = node.name.replace(".excalidraw", "");
         const newName = await promptDialog({
@@ -179,7 +182,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
           placeholder: currentCleanName,
           defaultValue: currentCleanName,
           confirmText: "Rename",
-          icon: "🏷️",
+          icon: <IconTag size={16} />,
         });
         if (newName && newName !== currentCleanName) {
           const finalName = isFolder ? newName : `${newName}.excalidraw`;
@@ -189,7 +192,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
     },
     {
       label: "Delete",
-      icon: "🗑️",
+      icon: <IconTrash size={14} />,
       danger: true,
       onClick: async () => {
         const confirmed = await confirmDialog({
@@ -197,7 +200,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
           message: `Are you sure you want to delete "${node.name}"? This action cannot be undone.`,
           danger: true,
           confirmText: "Delete",
-          icon: "🗑️",
+          icon: <IconTrash size={16} />,
         });
         if (confirmed) {
           onDeleteFile(node.path);

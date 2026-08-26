@@ -38,7 +38,7 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
         placeholder: "Untitled",
         defaultValue: "Untitled",
         confirmText: "Create",
-        icon: "✏️",
+        icon: <IconNewFile size={16} />,
       });
       if (name) {
         onCreateDrawing(name);

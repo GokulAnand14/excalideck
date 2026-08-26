@@ -1,5 +1,6 @@
 import React from "react";
 import { UpdateState } from "../../hooks/useUpdater";
+import { IconSparkles, IconAlertTriangle } from "./Icons";
 import "./UpdateModal.css";
 
 interface UpdateModalProps {
@@ -36,7 +37,9 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
       <div className="update-modal-card" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="update-modal-header">
-          <div className="update-icon-badge">✨</div>
+          <div className="update-icon-badge">
+            <IconSparkles size={20} />
+          </div>
           <div className="update-title-group">
             <h3 className="update-title">Update Available</h3>
             <p className="update-version-tag">
@@ -86,7 +89,12 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             </div>
           )}
 
-          {error && <div className="update-error-banner">⚠️ {error}</div>}
+          {error && (
+            <div className="update-error-banner">
+              <IconAlertTriangle size={15} />
+              <span>{error}</span>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
