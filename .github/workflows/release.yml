@@ -84,6 +84,6 @@ jobs:
 
             ### Downloads:
             Download the installer corresponding to your operating system below.
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
