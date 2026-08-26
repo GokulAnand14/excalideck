@@ -10,7 +10,7 @@ const rootDir = path.resolve(__dirname, "..");
 const newVersion = process.argv[2];
 
 if (!newVersion || !/^\d+\.\d+\.\d+.*$/.test(newVersion)) {
-  console.error("❌ Please provide a valid version number (e.g. bun run release 0.1.1)");
+  console.error("❌ Please provide a valid version number (e.g. bun run release 0.1.3)");
   process.exit(1);
 }
 
@@ -40,7 +40,7 @@ cargoToml = cargoToml.replace(/^version = ".*?"/m, `version = "${cleanVersion}"`
 fs.writeFileSync(cargoPath, cargoToml);
 console.log(`✅ Updated src-tauri/Cargo.toml -> ${cleanVersion}`);
 
-console.log("\n📦 Committing version bump and creating release tag...");
+console.log("\n📦 Committing version bump, tagging, and pushing to GitHub...");
 
 try {
   execSync(`git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml`, {
@@ -52,9 +52,10 @@ try {
     stdio: "inherit",
   });
   execSync(`git tag ${tag}`, { cwd: rootDir, stdio: "inherit" });
-  console.log(`\n🎉 Tag ${tag} created!`);
-  console.log(`\nTo push and trigger the automatic multi-platform release on GitHub:`);
-  console.log(`👉 git push origin main && git push origin ${tag}\n`);
+  execSync(`git push origin main`, { cwd: rootDir, stdio: "inherit" });
+  execSync(`git push origin ${tag}`, { cwd: rootDir, stdio: "inherit" });
+  console.log(`\n🎉 Successfully pushed ${tag} to GitHub!`);
+  console.log(`Live build: https://github.com/GokulAnand14/excalideck/actions\n`);
 } catch (e) {
   console.error("❌ Git operation failed:", e.message);
   process.exit(1);
