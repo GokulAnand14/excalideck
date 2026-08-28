@@ -1,7 +1,7 @@
 import React from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useDialog } from "../../context/DialogContext";
-import { IconSidebar, IconSun, IconMoon, IconNewFile } from "../common/Icons";
+import { IconSidebar, IconSun, IconMoon, IconNewFile, IconPlugin } from "../common/Icons";
 import "./Titlebar.css";
 
 interface TitlebarProps {
@@ -13,6 +13,7 @@ interface TitlebarProps {
   toggleTheme: () => void;
   onOpenVaultPicker?: () => void;
   onCreateDrawing?: (name: string) => void;
+  onOpenMarketplace?: () => void;
 }
 
 export const Titlebar: React.FC<TitlebarProps> = ({
@@ -24,6 +25,7 @@ export const Titlebar: React.FC<TitlebarProps> = ({
   toggleTheme,
   onOpenVaultPicker,
   onCreateDrawing,
+  onOpenMarketplace,
 }) => {
   const { promptDialog } = useDialog();
 
@@ -152,6 +154,16 @@ export const Titlebar: React.FC<TitlebarProps> = ({
           >
             <IconNewFile size={14} />
             <span>New</span>
+          </button>
+        )}
+
+        {onOpenMarketplace && (
+          <button
+            className="titlebar-icon-btn"
+            onClick={onOpenMarketplace}
+            title="Plugin Marketplace"
+          >
+            <IconPlugin size={15} />
           </button>
         )}
 

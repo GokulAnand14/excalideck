@@ -4,7 +4,8 @@ import { FileTreeNode } from "../../types/fileTree";
 import { DragGhost } from "./DragGhost";
 import { MoveModal } from "./MoveModal";
 import { useDialog } from "../../context/DialogContext";
-import { IconNewFile, IconNewFolder, IconSearch } from "../common/Icons";
+import { usePluginUI, PluginSlot } from "../../plugins";
+import { IconNewFile, IconNewFolder, IconSearch, IconPlugin } from "../common/Icons";
 import "./Sidebar.css";
 
 interface SidebarProps {
@@ -18,6 +19,7 @@ interface SidebarProps {
   onRenameFile: (oldPath: string, newName: string) => void;
   onMoveFile: (src: string, destFolder: string) => void;
   onOpenVaultPicker?: () => void;
+  onOpenMarketplace?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -31,8 +33,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRenameFile,
   onMoveFile,
   onOpenVaultPicker,
+  onOpenMarketplace,
 }) => {
   const { promptDialog } = useDialog();
+  const { sidebarPanels } = usePluginUI();
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
 
@@ -306,20 +310,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
+      {/* Plugin Sidebar Panels */}
+      {sidebarPanels.length > 0 && (
+        <div className="sidebar-plugin-panels">
+          {sidebarPanels.map((panel) => (
+            <div key={panel.id} className="sidebar-plugin-panel">
+              <div className="sidebar-plugin-panel-header">
+                <span className="sidebar-plugin-panel-title">{panel.title}</span>
+              </div>
+              <div className="sidebar-plugin-panel-content">
+                <PluginSlot render={panel.render} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Footer */}
       <div className="sidebar-footer">
         <span className="sidebar-stats">
           {totalDrawings} {totalDrawings === 1 ? "drawing" : "drawings"}
         </span>
-        {onOpenVaultPicker && (
-          <button
-            className="sidebar-switch-btn"
-            onClick={onOpenVaultPicker}
-            title="Switch or Open Another Vault"
-          >
-            Switch Vault
-          </button>
-        )}
+        <div style={{ display: "flex", gap: "4px" }}>
+          {onOpenMarketplace && (
+            <button
+              className="sidebar-switch-btn"
+              onClick={onOpenMarketplace}
+              title="Browse & Manage Plugins"
+            >
+              Plugins
+            </button>
+          )}
+          {onOpenVaultPicker && (
+            <button
+              className="sidebar-switch-btn"
+              onClick={onOpenVaultPicker}
+              title="Switch or Open Another Vault"
+            >
+              Switch Vault
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Floating Drag Ghost Badge */}

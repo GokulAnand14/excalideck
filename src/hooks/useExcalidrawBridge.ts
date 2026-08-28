@@ -135,6 +135,10 @@ export const useExcalidrawBridge = () => {
     }
   }, [flush]);
 
+  const getExcalidrawAPI = useCallback(() => {
+    return excalidrawAPIRef.current;
+  }, []);
+
   return {
     currentFile,
     initialData,
@@ -142,5 +146,6 @@ export const useExcalidrawBridge = () => {
     closeFile,
     triggerSave,
     setExcalidrawAPI,
+    getExcalidrawAPI,
   };
 };

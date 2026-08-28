@@ -156,3 +156,57 @@ export const IconAlertTriangle: React.FC<{ size?: number; className?: string }> 
     <line x1="12" y1="17" x2="12.01" y2="17" />
   </svg>
 );
+
+export const IconPlugin: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M19.439 7.85c0-1.57.802-2.54 1.561-3.3a.75.75 0 0 0 0-1.1c-.76-.76-1.73-1.561-3.3-1.561-1.57 0-2.54.802-3.3 1.561a.75.75 0 0 1-1.1 0C12.54 2.69 11.57 1.89 10 1.89c-1.57 0-2.54.8-3.3 1.56-.76.76-1.561 1.73-1.561 3.3 0 1.57-.802 2.54-1.561 3.3a.75.75 0 0 0 0 1.1c.76.76 1.73 1.561 3.3 1.561.28 0 .54-.03.78-.08l.02.02v5.5a2.5 2.5 0 0 0 2.5 2.5h5.5l.02.02c-.05.24-.08.5-.08.78 0 1.57.802 2.54 1.561 3.3a.75.75 0 0 0 1.1 0c.76-.76 1.561-1.73 1.561-3.3 0-1.57.802-2.54 1.561-3.3a.75.75 0 0 0 0-1.1c-.76-.76-1.73-1.561-3.3-1.561a2.6 2.6 0 0 1-.78.08l-.02-.02V9.8a2.5 2.5 0 0 0-2.5-2.5h-5.5" />
+  </svg>
+);
+
+export const IconCheck: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+export const IconDownload: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
+export const IconSettings: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+export const IconStar: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
+export const IconExternalLink: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+  </svg>
+);
+
+export const IconKeyboard: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8M6 10v.01" />
+  </svg>
+);
+
+export const IconZap: React.FC<{ size?: number; className?: string }> = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
