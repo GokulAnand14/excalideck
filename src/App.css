@@ -38,11 +38,3 @@
   gap: 4px;
   white-space: nowrap;
 }
-
-/* Hide Excalidraw Native Library Button */
-.excalidraw button[aria-label="Library"],
-.excalidraw button[title="Library"],
-.excalidraw button:has(svg.sidebar-library-icon),
-.excalidraw .layer-ui__library {
-  display: none !important;
-}
