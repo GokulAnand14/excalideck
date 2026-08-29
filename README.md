@@ -130,6 +130,12 @@ Point Excalideck at any local folder on your machine, and it instantly turns tha
 - **Custom Desktop Titlebar**: Authentic left-aligned traffic controls, active document path breadcrumbs, and integrated dark/light theme switching.
 - **Minimal Resource Footprint**: Built on Tauri v2 for low memory overhead and native execution speed.
 
+### Extensible Plugin Engine
+- **Developer API**: Secure `PluginContext` isolation provides unhindered, programmable read/write access to the canvas lifecycle.
+- **Native UI Injection**: Register custom interactive panels in the dedicated sidebar and status bar.
+- **Official Plugins Included**: Ships with **GhostKeys** (Vim-style modal keyboard navigation and shape spawning engine) and **StudyCalendar** (minimalist procedural calendar generation).
+- **Build Your Own**: Full developer guide available in [`PLUGINS.md`](./PLUGINS.md).
+
 ---
 
 <!-- ARCHITECTURE -->
