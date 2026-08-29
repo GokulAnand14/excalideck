@@ -8,8 +8,3 @@ export interface DrawingMeta {
   lastModified: number;
   size: number;
 }
-
-export interface LibraryInfo {
-  name: string;
-  path: string;
-}

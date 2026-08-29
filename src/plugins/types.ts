@@ -20,26 +20,6 @@ export interface CommandContribution {
   keybinding?: string;
 }
 
-export interface SidebarPanelContribution {
-  id: string;
-  title: string;
-  icon?: string;
-}
-
-export interface PluginContributions {
-  commands?: CommandContribution[];
-  sidebarPanels?: SidebarPanelContribution[];
-}
-
-export interface PluginSettingDefinition {
-  key: string;
-  type: "string" | "number" | "boolean" | "select";
-  label: string;
-  description?: string;
-  default: string | number | boolean;
-  options?: { label: string; value: string }[];  // for "select" type
-}
-
 export interface PluginManifest {
   id: string;
   name: string;
@@ -48,12 +28,10 @@ export interface PluginManifest {
   author: string;
   homepage?: string;
   license?: string;
-  engine?: string;        // semver range, e.g. ">=0.1.0"
-  main: string;           // entry point file
+  engine?: string; // semver range, e.g. ">=0.1.0"
+  main: string; // entry point file
   builtin: boolean;
   permissions: PluginPermission[];
-  contributes?: PluginContributions;
-  settings?: PluginSettingDefinition[];
 }
 
 // ---- Runtime Types ----

@@ -3,6 +3,123 @@ import type { ExcalideckPlugin, PluginContext } from "../../types";
 
 let globalHandleKeyDown: ((e: KeyboardEvent) => void) | null = null;
 
+const S = {
+  root: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "6px",
+    fontSize: "11.5px",
+    color: "var(--text-secondary)",
+  },
+  toggleCard: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "6px 8px",
+    background: "var(--hover-bg)",
+    borderRadius: "6px",
+    border: "1px solid var(--border-subtle)",
+    marginBottom: "2px",
+  },
+  toggleLabel: {
+    fontSize: "10.5px",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.06em",
+  },
+  toggleSwitch: {
+    width: "28px",
+    height: "16px",
+    borderRadius: "10px",
+    border: "1px solid var(--border-color)",
+    position: "relative" as const,
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+    padding: 0,
+    display: "flex",
+    alignItems: "center",
+    outline: "none",
+  },
+  toggleSwitchThumb: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "50%",
+    position: "absolute" as const,
+    top: "2px",
+    transition: "left 0.15s ease, background 0.15s ease",
+  },
+  section: {
+    borderTop: "1px solid var(--border-color)",
+    paddingTop: "5px",
+    marginTop: "1px",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "2px",
+  },
+  sectionLabel: {
+    fontSize: "9px",
+    fontWeight: 700,
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.07em",
+    color: "var(--text-muted)",
+    marginBottom: "3px",
+  },
+  row: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "2px 0",
+  },
+  rowLabel: {
+    fontSize: "11px",
+    color: "var(--text-secondary)",
+  },
+  kbd: {
+    fontFamily: "monospace",
+    fontSize: "9.5px",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    background: "var(--hover-bg)",
+    border: "1px solid var(--border-color)",
+    borderBottom: "2px solid var(--border-color)",
+    borderRadius: "3px",
+    padding: "1px 4px",
+    letterSpacing: "0.01em",
+    whiteSpace: "nowrap" as const,
+  },
+  spawnerGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: "4px",
+    marginTop: "2px",
+  },
+  spawnerBtn: {
+    padding: "4px 4px",
+    background: "var(--hover-bg)",
+    border: "1px solid var(--border-subtle)",
+    color: "var(--text-primary)",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "10.5px",
+    fontWeight: 500,
+    transition: "all 0.12s ease",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "4px",
+  },
+  spawnerKey: {
+    fontFamily: "monospace",
+    fontWeight: 700,
+    color: "var(--accent-color)",
+    fontSize: "10px",
+  },
+};
+
 export const ghostKeysPlugin: ExcalideckPlugin = {
   activate(context: PluginContext) {
     context.logger.info("GhostKeys Vim-Style Navigation Engine activated!");
@@ -119,6 +236,200 @@ export const ghostKeysPlugin: ExcalideckPlugin = {
             ...elem,
             x: elem.x + dx,
             y: elem.y + dy,
+            version: (elem.version || 1) + 1,
+            versionNonce: (elem.versionNonce || 1) + 1,
+            updated: Date.now(),
+          };
+        }
+        return elem;
+      });
+
+      context.canvas.updateScene({
+        elements: updated,
+        commitToHistory: true,
+      });
+    };
+
+    // Resize selected element(s) with points scaling for arrows/lines
+    const resizeSelected = (dw: number, dh: number) => {
+      const elements = Array.from(context.canvas.getElements() || []);
+      const appState = context.canvas.getAppState() || {};
+      const selectedIds = new Set(
+        Object.keys(appState.selectedElementIds || {}).filter((id) => appState.selectedElementIds[id])
+      );
+
+      if (selectedIds.size === 0) return;
+
+      const updated = elements.map((elem: any) => {
+        if (selectedIds.has(elem.id)) {
+          const oldW = elem.width || 0;
+          const oldH = elem.height || 0;
+          const newW = Math.max(10, oldW + dw);
+          const newH = Math.max(10, oldH + dh);
+
+          let newPoints = elem.points;
+          if (Array.isArray(elem.points) && elem.points.length > 0) {
+            const scaleX = oldW !== 0 ? newW / oldW : 1;
+            const scaleY = oldH !== 0 ? newH / oldH : 1;
+            newPoints = elem.points.map(([px, py]: [number, number]) => [
+              px * scaleX,
+              py * scaleY,
+            ]);
+          }
+
+          return {
+            ...elem,
+            width: newW,
+            height: newH,
+            ...(newPoints ? { points: newPoints } : {}),
+            version: (elem.version || 1) + 1,
+            versionNonce: (elem.versionNonce || 1) + 1,
+            updated: Date.now(),
+          };
+        }
+        return elem;
+      });
+
+      context.canvas.updateScene({
+        elements: updated,
+        commitToHistory: true,
+      });
+    };
+
+    // Scale selected element(s) proportionally and scale font size for text elements
+    const scaleSelected = (factor: number) => {
+      const elements = Array.from(context.canvas.getElements() || []);
+      const appState = context.canvas.getAppState() || {};
+      const selectedIds = new Set(
+        Object.keys(appState.selectedElementIds || {}).filter((id) => appState.selectedElementIds[id])
+      );
+
+      if (selectedIds.size === 0) return;
+
+      const updated = elements.map((elem: any) => {
+        if (selectedIds.has(elem.id)) {
+          const oldW = elem.width || 0;
+          const oldH = elem.height || 0;
+          const newW = Math.max(10, Math.round(oldW * factor));
+          const newH = Math.max(10, Math.round(oldH * factor));
+
+          const extra: Record<string, any> = {};
+
+          if (elem.type === "text" || elem.fontSize !== undefined) {
+            const currentFontSize = elem.fontSize || 20;
+            extra.fontSize = Math.round(Math.max(10, Math.min(120, currentFontSize * factor)));
+          }
+
+          if (Array.isArray(elem.points) && elem.points.length > 0) {
+            extra.points = elem.points.map(([px, py]: [number, number]) => [
+              px * factor,
+              py * factor,
+            ]);
+          }
+
+          return {
+            ...elem,
+            width: newW,
+            height: newH,
+            ...extra,
+            version: (elem.version || 1) + 1,
+            versionNonce: (elem.versionNonce || 1) + 1,
+            updated: Date.now(),
+          };
+        }
+        return elem;
+      });
+
+      context.canvas.updateScene({
+        elements: updated,
+        commitToHistory: true,
+      });
+    };
+
+    // Rotate selected element(s)
+    const rotateSelected = (deltaDegrees: number) => {
+      const elements = Array.from(context.canvas.getElements() || []);
+      const appState = context.canvas.getAppState() || {};
+      const selectedIds = new Set(
+        Object.keys(appState.selectedElementIds || {}).filter((id) => appState.selectedElementIds[id])
+      );
+
+      if (selectedIds.size === 0) return;
+
+      const deltaRad = (deltaDegrees * Math.PI) / 180;
+      const updated = elements.map((elem: any) => {
+        if (selectedIds.has(elem.id)) {
+          const currentAngle = elem.angle || 0;
+          const angle = (currentAngle + deltaRad) % (2 * Math.PI);
+          return {
+            ...elem,
+            angle,
+            version: (elem.version || 1) + 1,
+            versionNonce: (elem.versionNonce || 1) + 1,
+            updated: Date.now(),
+          };
+        }
+        return elem;
+      });
+
+      context.canvas.updateScene({
+        elements: updated,
+        commitToHistory: true,
+      });
+    };
+
+    // Reorder selected element(s) to front or back of canvas array
+    const reorderSelected = (direction: "front" | "back") => {
+      const elements = Array.from(context.canvas.getElements() || []);
+      const appState = context.canvas.getAppState() || {};
+      const selectedIds = new Set(
+        Object.keys(appState.selectedElementIds || {}).filter((id) => appState.selectedElementIds[id])
+      );
+
+      if (selectedIds.size === 0) return;
+
+      const selectedElements: any[] = [];
+      const unselectedElements: any[] = [];
+
+      elements.forEach((elem: any) => {
+        if (selectedIds.has(elem.id)) {
+          selectedElements.push({
+            ...elem,
+            version: (elem.version || 1) + 1,
+            versionNonce: (elem.versionNonce || 1) + 1,
+            updated: Date.now(),
+          });
+        } else {
+          unselectedElements.push(elem);
+        }
+      });
+
+      const updated =
+        direction === "front"
+          ? [...unselectedElements, ...selectedElements]
+          : [...selectedElements, ...unselectedElements];
+
+      context.canvas.updateScene({
+        elements: updated,
+        commitToHistory: true,
+      });
+    };
+
+    // Set stroke width for selected element(s)
+    const setStrokeWidthSelected = (width: number) => {
+      const elements = Array.from(context.canvas.getElements() || []);
+      const appState = context.canvas.getAppState() || {};
+      const selectedIds = new Set(
+        Object.keys(appState.selectedElementIds || {}).filter((id) => appState.selectedElementIds[id])
+      );
+
+      if (selectedIds.size === 0) return;
+
+      const updated = elements.map((elem: any) => {
+        if (selectedIds.has(elem.id)) {
+          return {
+            ...elem,
+            strokeWidth: width,
             version: (elem.version || 1) + 1,
             versionNonce: (elem.versionNonce || 1) + 1,
             updated: Date.now(),
@@ -273,21 +584,14 @@ export const ghostKeysPlugin: ExcalideckPlugin = {
         return;
       }
 
-      // 2. Toggle Navigation Mode with Escape or Alt+K
-      if (e.key === "Escape" || (e.altKey && (e.key === "k" || e.key === "K"))) {
+      // 2. Alt+K toggles Navigation Mode
+      if (e.altKey && (e.key === "k" || e.key === "K")) {
         setNavMode(!isNavMode);
         e.preventDefault();
         return;
       }
 
-      // 3. Exit Navigation Mode when pressing 'i' or 'Enter'
-      if (isNavMode && (e.key === "i" || e.key === "I" || e.key === "Enter")) {
-        setNavMode(false);
-        e.preventDefault();
-        return;
-      }
-
-      // 4. Tab / Shift+Tab: Intercept and cycle canvas elements without escaping to window DOM
+      // 3. Tab / Shift+Tab: Intercept and cycle canvas elements without escaping to window DOM
       if (e.key === "Tab") {
         e.preventDefault();
         e.stopPropagation();
@@ -300,116 +604,293 @@ export const ghostKeysPlugin: ExcalideckPlugin = {
         return;
       }
 
-      // 5. If NOT in Nav Mode, DO NOT capture single keys so Excalidraw standard shortcuts work 100%
+      // 4. If NOT in Nav Mode, Escape activates Nav Mode
       if (!isNavMode) {
+        if (e.key === "Escape") {
+          setNavMode(true);
+          e.preventDefault();
+        }
         return;
       }
 
       // ----------------------------------------------------
-      // NAVIGATION MODE ACTIVE: Conflict-Free Vim & Shape Hotkeys
+      // NAVIGATION MODE ACTIVE: Mouseless Controls
       // ----------------------------------------------------
-      const panStep = e.shiftKey ? 180 : 60;
-      const nudgeStep = e.shiftKey ? 60 : 20;
+      const appState = context.canvas.getAppState() || {};
+      const hasSelection = Object.values(appState.selectedElementIds || {}).some(Boolean);
 
-      // 1. Vim Movement / Pan (HJKL)
-      if (e.key === "h" || e.key === "H") {
-        panViewport(panStep, 0);
+      // Escape: If hasSelection, clear selection; if !hasSelection, exit Nav Mode
+      if (e.key === "Escape") {
+        if (hasSelection) {
+          context.canvas.updateScene({
+            appState: {
+              ...appState,
+              selectedElementIds: {},
+            },
+          });
+        } else {
+          setNavMode(false);
+        }
         e.preventDefault();
-      } else if (e.key === "l" || e.key === "L") {
-        panViewport(-panStep, 0);
-        e.preventDefault();
-      } else if (e.key === "k" || e.key === "K") {
-        panViewport(0, panStep);
-        e.preventDefault();
-      } else if (e.key === "j" || e.key === "J") {
-        panViewport(0, -panStep);
-        e.preventDefault();
+        return;
       }
-      // 2. Arrow Keys: Nudge Selected Shape (or Pan if nothing selected)
-      else if (e.key === "ArrowLeft") {
-        const appState = context.canvas.getAppState() || {};
-        const hasSelection = Object.values(appState.selectedElementIds || {}).some(Boolean);
+
+      // Exit Navigation Mode when pressing 'i', 'I', or 'Enter'
+      if (e.key === "i" || e.key === "I" || e.key === "Enter") {
+        setNavMode(false);
+        e.preventDefault();
+        return;
+      }
+
+      const panStep = e.shiftKey ? 180 : 60;
+      const nudgeStep = 20;
+
+      // ----------------------------------------------------
+      // RESIZE (Shift + Arrows or Shift + H/J/K/L when selected)
+      // ----------------------------------------------------
+      if (hasSelection && e.shiftKey) {
+        if (e.key === "ArrowRight" || e.key === "L" || e.key === "l") {
+          resizeSelected(20, 0);
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "ArrowLeft" || e.key === "H" || e.key === "h") {
+          resizeSelected(-20, 0);
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "ArrowDown" || e.key === "J" || e.key === "j") {
+          resizeSelected(0, 20);
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "ArrowUp" || e.key === "K" || e.key === "k") {
+          resizeSelected(0, -20);
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // ----------------------------------------------------
+      // MOVEMENT / NUDGE / PAN
+      // ----------------------------------------------------
+      if (e.key === "ArrowLeft") {
         if (hasSelection) {
           nudgeSelected(-nudgeStep, 0);
         } else {
           panViewport(panStep, 0);
         }
         e.preventDefault();
-      } else if (e.key === "ArrowRight") {
-        const appState = context.canvas.getAppState() || {};
-        const hasSelection = Object.values(appState.selectedElementIds || {}).some(Boolean);
+        return;
+      }
+      if (e.key === "ArrowRight") {
         if (hasSelection) {
           nudgeSelected(nudgeStep, 0);
         } else {
           panViewport(-panStep, 0);
         }
         e.preventDefault();
-      } else if (e.key === "ArrowUp") {
-        const appState = context.canvas.getAppState() || {};
-        const hasSelection = Object.values(appState.selectedElementIds || {}).some(Boolean);
+        return;
+      }
+      if (e.key === "ArrowUp") {
         if (hasSelection) {
           nudgeSelected(0, -nudgeStep);
         } else {
           panViewport(0, panStep);
         }
         e.preventDefault();
-      } else if (e.key === "ArrowDown") {
-        const appState = context.canvas.getAppState() || {};
-        const hasSelection = Object.values(appState.selectedElementIds || {}).some(Boolean);
+        return;
+      }
+      if (e.key === "ArrowDown") {
         if (hasSelection) {
           nudgeSelected(0, nudgeStep);
         } else {
           panViewport(0, -panStep);
         }
         e.preventDefault();
+        return;
       }
-      // 3. Selection Cycling via brackets or n/p in Nav Mode
-      else if (e.key === "]" || e.key === "n" || e.key === "N") {
+
+      // Vim HJKL (without Shift, or when nothing selected)
+      if (e.key === "h" || (!hasSelection && e.key === "H")) {
+        if (hasSelection) {
+          nudgeSelected(-nudgeStep, 0);
+        } else {
+          panViewport(panStep, 0);
+        }
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "l" || (!hasSelection && e.key === "L")) {
+        if (hasSelection) {
+          nudgeSelected(nudgeStep, 0);
+        } else {
+          panViewport(-panStep, 0);
+        }
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "k" || (!hasSelection && e.key === "K")) {
+        if (hasSelection) {
+          nudgeSelected(0, -nudgeStep);
+        } else {
+          panViewport(0, panStep);
+        }
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "j" || (!hasSelection && e.key === "J")) {
+        if (hasSelection) {
+          nudgeSelected(0, nudgeStep);
+        } else {
+          panViewport(0, -panStep);
+        }
+        e.preventDefault();
+        return;
+      }
+
+      // ----------------------------------------------------
+      // SCALE (when selected)
+      // ----------------------------------------------------
+      if (hasSelection && (e.key === ">" || e.key === "." || e.key === "+" || e.key === "=")) {
+        scaleSelected(1.15);
+        e.preventDefault();
+        return;
+      }
+      if (hasSelection && (e.key === "<" || e.key === "," || e.key === "-" || e.key === "_")) {
+        scaleSelected(0.85);
+        e.preventDefault();
+        return;
+      }
+
+      // ----------------------------------------------------
+      // ROTATE (when selected)
+      // ----------------------------------------------------
+      if (hasSelection && (e.key === "r" || e.key === "R")) {
+        rotateSelected(15);
+        e.preventDefault();
+        return;
+      }
+
+      // ----------------------------------------------------
+      // LAYERING / Z-ORDER (when selected) or CYCLE (when nothing selected)
+      // ----------------------------------------------------
+      if (e.key === "]") {
+        if (hasSelection) {
+          reorderSelected("front");
+        } else {
+          cycleSelection(true);
+        }
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "[") {
+        if (hasSelection) {
+          reorderSelected("back");
+        } else {
+          cycleSelection(false);
+        }
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "n" || e.key === "N") {
         cycleSelection(true);
         e.preventDefault();
-      } else if (e.key === "[" || e.key === "p" || e.key === "P") {
+        return;
+      }
+      if (e.key === "p" || e.key === "P") {
         cycleSelection(false);
         e.preventDefault();
+        return;
       }
-      // 4. Shape Spawning (A=Arrow, D=Diamond, R=Rect, O/E=Circle, T=Text)
-      else if (e.key === "a" || e.key === "A") {
-        spawnShape("arrow");
+
+      // ----------------------------------------------------
+      // STROKE WIDTH (when selected)
+      // ----------------------------------------------------
+      if (hasSelection && e.key === "1") {
+        setStrokeWidthSelected(1);
         e.preventDefault();
-      } else if (e.key === "d" || e.key === "D") {
-        spawnShape("diamond");
-        e.preventDefault();
-      } else if (e.key === "r" || e.key === "R") {
-        spawnShape("rectangle");
-        e.preventDefault();
-      } else if (e.key === "o" || e.key === "O" || e.key === "e" || e.key === "E") {
-        spawnShape("ellipse");
-        e.preventDefault();
-      } else if (e.key === "t" || e.key === "T") {
-        spawnShape("text");
-        setNavMode(false); // Switch to insert mode so user can type immediately
-        e.preventDefault();
+        return;
       }
-      // 5. Object Manipulation (Clone / Delete)
-      else if (e.key === "c" || e.key === "C") {
+      if (hasSelection && e.key === "2") {
+        setStrokeWidthSelected(2);
+        e.preventDefault();
+        return;
+      }
+      if (hasSelection && e.key === "3") {
+        setStrokeWidthSelected(4);
+        e.preventDefault();
+        return;
+      }
+
+      // ----------------------------------------------------
+      // OBJECT MANIPULATION (Clone / Delete)
+      // ----------------------------------------------------
+      if (e.key === "c" || e.key === "C") {
         duplicateSelected();
         e.preventDefault();
-      } else if (e.key === "x" || e.key === "X" || e.key === "Delete" || e.key === "Backspace") {
+        return;
+      }
+      if (e.key === "x" || e.key === "X" || e.key === "Delete" || e.key === "Backspace") {
         deleteSelected();
         e.preventDefault();
+        return;
       }
-      // 6. Zoom & Fit Controls
-      else if (e.key === "+" || e.key === "=") {
-        zoomViewport(1.15);
-        e.preventDefault();
-      } else if (e.key === "-" || e.key === "_") {
-        zoomViewport(0.85);
-        e.preventDefault();
-      } else if (e.key === "0") {
-        resetZoom();
-        e.preventDefault();
-      } else if (e.key === "z" || e.key === "Z") {
-        context.canvas.scrollToContent?.();
-        e.preventDefault();
+
+      // ----------------------------------------------------
+      // SHAPE SPAWNING (when nothing selected)
+      // ----------------------------------------------------
+      if (!hasSelection) {
+        if (e.key === "r" || e.key === "R") {
+          spawnShape("rectangle");
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "o" || e.key === "O" || e.key === "e" || e.key === "E") {
+          spawnShape("ellipse");
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "d" || e.key === "D") {
+          spawnShape("diamond");
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "a" || e.key === "A") {
+          spawnShape("arrow");
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "t" || e.key === "T") {
+          spawnShape("text");
+          setNavMode(false); // Switch to insert mode so user can type immediately
+          e.preventDefault();
+          return;
+        }
+
+        // ----------------------------------------------------
+        // ZOOM & FIT (when nothing selected)
+        // ----------------------------------------------------
+        if (e.key === "+" || e.key === "=") {
+          zoomViewport(1.15);
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "-" || e.key === "_") {
+          zoomViewport(0.85);
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "0") {
+          resetZoom();
+          e.preventDefault();
+          return;
+        }
+        if (e.key === "z" || e.key === "Z") {
+          context.canvas.scrollToContent?.();
+          e.preventDefault();
+          return;
+        }
       }
     };
 
@@ -447,7 +928,6 @@ export const ghostKeysPlugin: ExcalideckPlugin = {
             }}
             title="GhostKeys – Click or press Escape to toggle Navigation Mode"
           >
-            {/* Inline keyboard SVG icon — no emoji */}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={active ? "#818cf8" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: active ? 1 : 0.7, flexShrink: 0 }}>
               <rect x="2" y="6" width="20" height="12" rx="2" />
               <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
@@ -455,103 +935,6 @@ export const ghostKeysPlugin: ExcalideckPlugin = {
             <span style={{ fontSize: "11px", fontWeight: 600, color: active ? "#818cf8" : "var(--text-secondary)" }}>
               {active ? "NAV" : "GhostKeys"}
             </span>
-          </div>
-        );
-      },
-    });
-
-    // Register Floating Glassmorphic HUD Widget
-    context.ui.registerStatusBarItem({
-      id: "ghostkeys-floating-hud",
-      render: () => {
-        const [active, setActive] = useState(isNavMode);
-
-        useEffect(() => {
-          const listener = (newActive: boolean) => setActive(newActive);
-          modeListeners.add(listener);
-          return () => {
-            modeListeners.delete(listener);
-          };
-        }, []);
-
-        if (!active) return null;
-
-        return (
-          <div
-            style={{
-              position: "fixed",
-              bottom: "44px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              background: "rgba(18, 18, 20, 0.92)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid var(--border-color)",
-              borderRadius: "6px",
-              padding: "5px 12px",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
-              color: "var(--text-primary)",
-              fontSize: "11px",
-              zIndex: 9999,
-              userSelect: "none",
-              pointerEvents: "auto",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-              <span
-                style={{
-                  width: "5px",
-                  height: "5px",
-                  borderRadius: "50%",
-                  background: "var(--accent-color)",
-                  display: "inline-block",
-                }}
-              />
-              <span style={{ fontWeight: 600, fontSize: "10.5px", letterSpacing: "0.06em", color: "var(--text-primary)" }}>
-                NAV
-              </span>
-            </div>
-
-            <div style={{ height: "10px", width: "1px", background: "var(--border-color)" }} />
-
-            <div style={{ display: "flex", gap: "8px", fontSize: "10.5px", color: "var(--text-secondary)" }}>
-              <span><strong style={{ color: "var(--text-primary)", fontWeight: 600 }}>HJKL</strong> Pan</span>
-              <span><strong style={{ color: "var(--text-primary)", fontWeight: 600 }}>Tab</strong> Cycle</span>
-              <span><strong style={{ color: "var(--text-primary)", fontWeight: 600 }}>R/O/D/A</strong> Spawn</span>
-              <span><strong style={{ color: "var(--text-primary)", fontWeight: 600 }}>C/X</strong> Clone/Del</span>
-              <span><strong style={{ color: "var(--text-primary)", fontWeight: 600 }}>Z</strong> Fit</span>
-            </div>
-
-            <div style={{ height: "10px", width: "1px", background: "var(--border-color)" }} />
-
-            <button
-              onClick={() => setNavMode(false)}
-              style={{
-                background: "transparent",
-                border: "1px solid var(--border-color)",
-                color: "var(--text-muted)",
-                padding: "1px 6px",
-                borderRadius: "3px",
-                fontSize: "9.5px",
-                cursor: "pointer",
-                fontWeight: 600,
-                letterSpacing: "0.02em",
-                transition: "all 0.1s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--text-primary)";
-                e.currentTarget.style.borderColor = "var(--text-muted)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--text-muted)";
-                e.currentTarget.style.borderColor = "var(--border-color)";
-              }}
-            >
-              ESC
-            </button>
           </div>
         );
       },
@@ -573,160 +956,124 @@ export const ghostKeysPlugin: ExcalideckPlugin = {
           };
         }, []);
 
-        const S = {
-          root: {
-            display: "flex",
-            flexDirection: "column" as const,
-            gap: "0px",
-            fontSize: "11.5px",
-            color: "var(--text-secondary)",
-          },
-          toggleRow: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "4px 0 8px 0",
-          },
-          toggleLabel: {
-            fontSize: "10px",
-            fontWeight: 700,
-            color: "var(--text-muted)",
-            textTransform: "uppercase" as const,
-            letterSpacing: "0.07em",
-          },
-          toggleSwitch: {
-            width: "26px",
-            height: "14px",
-            borderRadius: "10px",
-            background: active ? "var(--accent-color)" : "var(--hover-bg)",
-            border: "1px solid var(--border-color)",
-            position: "relative" as const,
-            cursor: "pointer",
-            transition: "all 0.15s ease",
-            padding: 0,
-            display: "flex",
-            alignItems: "center",
-            outline: "none",
-          },
-          toggleSwitchThumb: {
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            background: active ? "#ffffff" : "var(--text-muted)",
-            position: "absolute" as const,
-            top: "2px",
-            left: active ? "13px" : "2px",
-            transition: "left 0.15s ease, background 0.15s ease",
-          },
-          section: {
-            borderTop: "1px solid var(--border-color)",
-            paddingTop: "6px",
-            marginTop: "2px",
-          },
-          sectionLabel: {
-            fontSize: "9.5px",
-            fontWeight: 700,
-            textTransform: "uppercase" as const,
-            letterSpacing: "0.07em",
-            color: "var(--text-muted)",
-            marginBottom: "4px",
-          },
-          row: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "2.5px 0",
-          },
-          kbd: {
-            fontFamily: "monospace",
-            fontSize: "9.5px",
-            fontWeight: 600,
-            color: "var(--text-secondary)",
-            background: "var(--hover-bg)",
-            border: "1px solid var(--border-color)",
-            borderBottom: "2px solid var(--border-color)",
-            borderRadius: "3px",
-            padding: "0px 4px",
-            letterSpacing: "0.01em",
-            whiteSpace: "nowrap" as const,
-          },
-          spawnerGrid: {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "4px",
-          },
-          spawnerBtn: {
-            padding: "4px 6px",
-            background: "transparent",
-            border: "1px solid var(--border-color)",
-            color: "var(--text-muted)",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "10.5px",
-            fontWeight: 500,
-            transition: "all 0.1s ease",
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-          },
-          spawnerKey: {
-            fontFamily: "monospace",
-            fontWeight: 700,
-            color: "var(--text-secondary)",
-            fontSize: "10px",
-          },
-        };
-
         return (
           <div style={S.root}>
             {/* Mode Toggle */}
-            <div style={S.toggleRow}>
-              <span style={S.toggleLabel}>Nav Mode</span>
+            <div style={S.toggleCard}>
+              <span style={S.toggleLabel}>
+                Nav Mode
+                <span
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 700,
+                    padding: "1px 5px",
+                    borderRadius: "3px",
+                    background: active ? "var(--accent-subtle)" : "transparent",
+                    color: active ? "var(--accent-color)" : "var(--text-muted)",
+                    border: active ? "1px solid var(--accent-color)" : "1px solid transparent",
+                  }}
+                >
+                  {active ? "ACTIVE" : "OFF"}
+                </span>
+              </span>
               <button
                 type="button"
-                style={S.toggleSwitch}
+                style={{
+                  ...S.toggleSwitch,
+                  background: active ? "var(--accent-color)" : "var(--hover-bg)",
+                }}
                 onClick={() => setNavMode(!active)}
                 title={active ? "Nav Mode Enabled (Esc to toggle)" : "Nav Mode Disabled (Esc to toggle)"}
                 aria-label="Toggle Nav Mode"
               >
-                <span style={S.toggleSwitchThumb} />
+                <span
+                  style={{
+                    ...S.toggleSwitchThumb,
+                    background: active ? "#ffffff" : "var(--text-muted)",
+                    left: active ? "15px" : "2px",
+                  }}
+                />
               </button>
             </div>
 
-            {/* Key Bindings */}
+            {/* Move & Pan */}
             <div style={S.section}>
-              <div style={S.sectionLabel}>Bindings</div>
-              {([
-                ["Toggle", "Esc / Alt+K"],
-                ["Pan",    "H J K L"],
-                ["Nudge",  "Arrows"],
-                ["Cycle",  "Tab / [ ]"],
-                ["Clone / Del", "C / X"],
-                ["Zoom / Fit",  "+ - 0 Z"],
-              ] as [string, string][]).map(([label, keys]) => (
-                <div key={label} style={S.row}>
-                  <span>{label}</span>
-                  <span style={S.kbd}>{keys}</span>
-                </div>
-              ))}
+              <div style={S.sectionLabel}>Move & Pan</div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Pan / Nudge</span>
+                <span style={S.kbd}>HJKL / Arrows</span>
+              </div>
+            </div>
+
+            {/* Resize & Scale */}
+            <div style={S.section}>
+              <div style={S.sectionLabel}>Resize & Scale</div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Resize (W/H)</span>
+                <span style={S.kbd}>⇧ Arrows</span>
+              </div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Scale (±15%)</span>
+                <span style={S.kbd}>&lt; &gt; / + -</span>
+              </div>
+            </div>
+
+            {/* Rotate & Layer */}
+            <div style={S.section}>
+              <div style={S.sectionLabel}>Rotate & Layer</div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Rotate 15°</span>
+                <span style={S.kbd}>⇧ R</span>
+              </div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Back / Front</span>
+                <span style={S.kbd}>[ ]</span>
+              </div>
+            </div>
+
+            {/* Quick Style */}
+            <div style={S.section}>
+              <div style={S.sectionLabel}>Quick Style</div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Stroke Width</span>
+                <span style={S.kbd}>1 2 3</span>
+              </div>
+            </div>
+
+            {/* Selection */}
+            <div style={S.section}>
+              <div style={S.sectionLabel}>Selection</div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Cycle Items</span>
+                <span style={S.kbd}>Tab / ⇧Tab</span>
+              </div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Deselect / Exit</span>
+                <span style={S.kbd}>Esc</span>
+              </div>
+              <div style={S.row}>
+                <span style={S.rowLabel}>Clone / Delete</span>
+                <span style={S.kbd}>C / X</span>
+              </div>
             </div>
 
             {/* Shape Spawner */}
-            <div style={{ ...S.section, marginBottom: "4px" }}>
-              <div style={S.sectionLabel}>Spawn</div>
+            <div style={{ ...S.section, marginBottom: "2px" }}>
+              <div style={S.sectionLabel}>Shapes</div>
               <div style={S.spawnerGrid}>
                 {([
                   ["R", "Rect",    "rectangle"],
                   ["O", "Circle",  "ellipse"],
                   ["D", "Diamond", "diamond"],
                   ["A", "Arrow",   "arrow"],
+                  ["L", "Line",    "line"],
                   ["T", "Text",    "text"],
-                ] as [string, string, string][]).map(([key, label, type]) => (
+                ] as const).map(([key, label, type]) => (
                   <button
                     key={type}
                     style={S.spawnerBtn}
                     onClick={() => {
-                      spawnShape(type as any);
+                      spawnShape(type);
                       if (type === "text") setNavMode(false);
                     }}
                   >

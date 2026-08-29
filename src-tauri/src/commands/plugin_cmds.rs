@@ -125,23 +125,18 @@ pub fn list_community_plugins(state: State<'_, Mutex<AppState>>) -> Result<Vec<C
         return Ok(Vec::new());
     }
     
-    let mut plugins = Vec::new();
-    let entries = fs::read_dir(plugins_dir).map_err(|e| e.to_string())?;
-    
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            let plugin_json_path = path.join("plugin.json");
-            if plugin_json_path.exists() {
-                if let Ok(content) = fs::read_to_string(&plugin_json_path) {
-                    if let Ok(mut info) = serde_json::from_str::<CommunityPluginInfo>(&content) {
-                        info.dir_path = path.to_string_lossy().to_string();
-                        plugins.push(info);
-                    }
-                }
-            }
-        }
-    }
+    let plugins = fs::read_dir(plugins_dir)
+        .map_err(|e| e.to_string())?
+        .filter_map(Result::ok)
+        .filter(|entry| entry.path().is_dir())
+        .filter_map(|entry| {
+            let path = entry.path();
+            let content = fs::read_to_string(path.join("plugin.json")).ok()?;
+            let mut info = serde_json::from_str::<CommunityPluginInfo>(&content).ok()?;
+            info.dir_path = path.to_string_lossy().to_string();
+            Some(info)
+        })
+        .collect();
     
     Ok(plugins)
 }

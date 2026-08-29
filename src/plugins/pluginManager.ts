@@ -1,15 +1,16 @@
 import type React from "react";
 import type {
   PluginManifest, ExcalideckPlugin, PluginContext, PluginInfo,
-  PluginStatus, PluginAppAPI, PluginCanvasAPI, PluginCommandsAPI,
+  PluginAppAPI, PluginCanvasAPI, PluginCommandsAPI,
   PluginEventsAPI, PluginStorageAPI, PluginUIAPI, PluginLoggerAPI,
-  PluginEventName, CommandContribution,
+  CommandContribution,
 } from "./types";
 import { PluginEventBus } from "./eventBus";
 import { createPluginStorage } from "./pluginStorage";
-import { builtinPlugins } from "./registry";
 import { discoverCommunityPlugins } from "./communityLoader";
 import { ghostKeysPlugin } from "./official/ghost-keys";
+import { studyCalendarPlugin } from "./official/study-calendar";
+import { MARKETPLACE_CATALOG } from "./marketplace";
 
 interface RegisteredSidebarPanel {
   pluginId: string;
@@ -117,13 +118,6 @@ export class PluginManager {
   // ---- Discovery ----
 
   async discoverBuiltinPlugins(): Promise<void> {
-    for (const [id, entry] of builtinPlugins) {
-      this.plugins.set(id, {
-        manifest: entry.manifest,
-        status: "installed",
-        source: "builtin",
-      });
-    }
     this.notifyUIChange();
   }
 
@@ -178,31 +172,29 @@ export class PluginManager {
           source: customManifest.builtin ? "builtin" : "community",
         };
         this.plugins.set(id, info);
-      } else if (id === "excalideck.ghost-keys") {
-        info = {
-          manifest: {
-            id: "excalideck.ghost-keys",
-            name: "GhostKeys",
-            version: "1.0.0",
-            description: "Hands-free keyboard navigation engine.",
-            author: "Gokul (Official)",
-            main: "index.js",
-            builtin: false,
-            permissions: [
-              "canvas:read",
-              "canvas:write",
-              "ui:statusbar",
-              "ui:sidebar",
-              "commands:register",
-            ],
-          },
-          status: "installed",
-          source: "community",
-        };
-        this.plugins.set(id, info);
       } else {
-        console.warn(`[PluginManager] Plugin "${id}" not found`);
-        return;
+        const catalogItem = MARKETPLACE_CATALOG.find(p => p.id === id);
+        if (catalogItem) {
+          info = {
+            manifest: {
+              id: catalogItem.id,
+              name: catalogItem.name,
+              version: catalogItem.version,
+              description: catalogItem.description,
+              author: catalogItem.author,
+              homepage: catalogItem.homepage,
+              main: "index.js",
+              builtin: false,
+              permissions: catalogItem.permissions,
+            },
+            status: "installed",
+            source: "community",
+          };
+          this.plugins.set(id, info);
+        } else {
+          console.warn(`[PluginManager] Plugin "${id}" not found`);
+          return;
+        }
       }
     }
 
@@ -215,21 +207,20 @@ export class PluginManager {
         instance = { plugin: customModule, disposables: [] };
         this.instances.set(id, instance);
       } else if (!instance) {
-        // 1. Built-in plugin: create from factory
-        const builtin = builtinPlugins.get(id);
-        if (builtin) {
-          instance = { plugin: builtin.factory(), disposables: [] };
-          this.instances.set(id, instance);
-        } else if (id === "excalideck.ghost-keys") {
-          // 2. Official pre-compiled plugin
+        if (id === "excalideck.ghost-keys") {
+          // Official pre-compiled plugin
           instance = { plugin: ghostKeysPlugin, disposables: [] };
+          this.instances.set(id, instance);
+        } else if (id === "excalideck.study-calendar") {
+          // Official pre-compiled plugin
+          instance = { plugin: studyCalendarPlugin, disposables: [] };
           this.instances.set(id, instance);
         } else {
           throw new Error(`No module found for plugin "${id}"`);
         }
       }
 
-      const context = this.buildContext(id, info.manifest);
+      const context = this.buildContext(id);
       await instance.plugin.activate(context);
 
       info.status = "active";
@@ -326,7 +317,7 @@ export class PluginManager {
 
   // ---- Context Builder ----
 
-  private buildContext(pluginId: string, manifest: PluginManifest): PluginContext {
+  private buildContext(pluginId: string): PluginContext {
     const instance = this.instances.get(pluginId)!;
     const eventBus = this.eventBus;
     const manager = this;
@@ -355,11 +346,10 @@ export class PluginManager {
     const commands: PluginCommandsAPI = {
       register(id, handler) {
         const fullId = `${pluginId}.${id}`;
-        const contribution = manifest.contributes?.commands?.find(c => c.id === id || c.id === fullId);
         const entry: RegisteredCommand = {
           pluginId,
           id: fullId,
-          title: contribution?.title ?? id,
+          title: id,
           handler,
         };
         manager.commands = [...manager.commands, entry];

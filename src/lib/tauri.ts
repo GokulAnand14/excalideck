@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { VaultInfo, RecentVault, AppConfig } from "../types/vault";
 import { FileTreeNode } from "../types/fileTree";
-import { DrawingData, LibraryInfo } from "../types/drawing";
+import { DrawingData } from "../types/drawing";
 
 // Vault commands
 export const openVault = (path: string) => invoke<VaultInfo>("open_vault", { path });
@@ -25,10 +25,6 @@ export const createFolder = (path: string) => invoke("create_folder", { path });
 export const saveAsset = (id: string, data: string, mimeType: string) => invoke<string>("save_asset", { id, data, mimeType });
 export const getAssetPath = (id: string) => invoke<string | null>("get_asset_path", { id });
 
-// Library commands
-export const listLibraries = () => invoke<LibraryInfo[]>("list_libraries");
-export const saveLibrary = (name: string, content: string) => invoke("save_library", { name, content });
-export const loadLibrary = (path: string) => invoke<string>("load_library", { path });
 
 // Config commands
 export const getAppConfig = () => invoke<AppConfig>("get_app_config");

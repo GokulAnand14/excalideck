@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Excalideck Plugin Marketplace
    Design: Dark-first, Monochrome, Flat — Raycast / Linear / Vercel inspired
    Rules: no gradients, no accent glow shadows, flat fills only.
@@ -334,8 +334,24 @@
   color: var(--text-muted);
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   margin-top: 1px;
+}
+
+.item-meta-dot {
+  font-size: 8px;
+  color: var(--border-color);
+}
+
+.item-category-tag {
+  color: var(--text-muted);
+}
+
+.item-version-tag {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
 }
 
 /* Verified checkmark — flat accent color, no glow */
@@ -351,6 +367,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Status dot in master list */
+.item-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
+.item-status-dot.active {
+  background: #10b981;
+}
+
+.item-status-dot.off {
+  background: var(--text-muted);
 }
 
 /* Status indicator — 6px dot before text, NO pill, NO rounded bg */
@@ -493,10 +526,10 @@
   color: var(--text-primary);
 }
 
-/* Official / verified badge — flat NO gradient */
-.detail-official-pill {
-  font-size: 10px;
-  font-weight: 600;
+/* Hero metadata pills — sleek, subtle, dark-first flat aesthetic */
+.detail-meta-pill {
+  font-size: 11px;
+  font-weight: 500;
   padding: 2px 7px;
   border-radius: 4px;
   background: var(--hover-bg);
@@ -505,6 +538,25 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  line-height: 1.3;
+}
+
+.detail-version-pill {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.detail-category-pill {
+  color: var(--text-secondary);
+}
+
+.detail-official-pill {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-color);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -648,44 +700,43 @@
   margin: 0 0 10px 0;
 }
 
-/* Quick Stats Bar — flat, no glow */
-.detail-stats-bar {
-  display: flex;
-  gap: 0;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.stat-block {
-  flex: 1;
+/* Keymap & Controls Header */
+.keymap-section {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 10px 14px;
-  background: var(--hover-bg);
-  border-right: 1px solid var(--border-color);
+  gap: 10px;
 }
 
-.stat-block:last-child {
-  border-right: none;
+.keymap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.stat-label {
-  font-size: 10px;
-  font-weight: 500;
+.keymap-title {
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
 }
 
-.stat-val {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
+.keymap-live-status {
+  font-size: 11px;
+  font-weight: 500;
+  color: #10b981;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+}
+
+.keymap-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -804,22 +855,20 @@
   background: var(--bg-sidebar);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 7px 14px;
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   box-shadow: var(--shadow-md);
   animation: toastSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 100;
-  max-width: 260px;
+  max-width: 320px;
 }
 
-.marketplace-toast-icon {
-  font-size: 13px;
-  flex-shrink: 0;
+.marketplace-toast-text {
+  line-height: 1.3;
 }
 
 /* --------------------------------------------------------------------------

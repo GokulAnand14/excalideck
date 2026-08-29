@@ -1,6 +1,7 @@
 import { listCommunityPlugins, readPluginFile } from "../lib/tauri";
 import type { PluginManifest, ExcalideckPlugin } from "./types";
 import { ghostKeysPlugin } from "./official/ghost-keys";
+import { studyCalendarPlugin } from "./official/study-calendar";
 
 export interface CommunityPluginEntry {
   manifest: PluginManifest;
@@ -10,6 +11,7 @@ export interface CommunityPluginEntry {
 // Map of official downloadable plugins pre-bundled into the app binary
 const OFFICIAL_PLUGIN_MODULES: Record<string, ExcalideckPlugin> = {
   "excalideck.ghost-keys": ghostKeysPlugin,
+  "excalideck.study-calendar": studyCalendarPlugin,
 };
 
 /**
@@ -44,7 +46,7 @@ export async function discoverCommunityPlugins(): Promise<CommunityPluginEntry[]
       } else {
         // 2. Otherwise, read plugin file from vault disk and evaluate
         const code = await readPluginFile(info.id, manifest.main);
-        pluginModule = await evaluatePluginCode(code, info.id);
+        pluginModule = evaluatePluginCode(code, info.id);
       }
 
       if (!pluginModule || typeof pluginModule.activate !== "function") {
@@ -64,22 +66,7 @@ export async function discoverCommunityPlugins(): Promise<CommunityPluginEntry[]
 /**
  * Safely evaluates plugin JavaScript code into an ExcalideckPlugin module.
  */
-async function evaluatePluginCode(code: string, pluginId: string): Promise<ExcalideckPlugin | null> {
-  // Method 1: Blob URL dynamic import
-  try {
-    const blob = new Blob([code], { type: "application/javascript" });
-    const blobUrl = URL.createObjectURL(blob);
-    try {
-      const mod = await import(/* @vite-ignore */ blobUrl);
-      return mod.default ?? mod;
-    } finally {
-      URL.revokeObjectURL(blobUrl);
-    }
-  } catch (err) {
-    console.warn(`[CommunityLoader] Blob import failed for "${pluginId}", falling back to function evaluator:`, err);
-  }
-
-  // Method 2: Fallback Function evaluator
+function evaluatePluginCode(code: string, pluginId: string): ExcalideckPlugin | null {
   try {
     const moduleObj = { exports: {} as any };
     const runner = new Function("exports", "module", "require", code);

@@ -32,7 +32,7 @@ impl Vault {
             .filter(|e| {
                 e.path()
                     .extension()
-                    .map_or(false, |ext| ext == "excalidraw")
+                    .is_some_and(|ext| ext == "excalidraw")
             })
             .count();
 

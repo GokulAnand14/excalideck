@@ -4,10 +4,10 @@ import {
   IconSearch,
   IconCheck,
   IconDownload,
-  IconStar,
   IconTrash,
   IconExternalLink,
   IconKeyboard,
+  IconCalendar,
 } from "../common/Icons";
 import { usePluginManager } from "../../plugins/PluginProvider";
 import { usePluginList } from "../../plugins/usePlugins";
@@ -30,8 +30,9 @@ type ViewFilter = "discover" | "installed";
 
 interface ToastMessage {
   text: string;
-  icon?: string;
 }
+
+
 
 export const PluginMarketplaceModal: React.FC<PluginMarketplaceModalProps> = ({
   isOpen,
@@ -47,61 +48,20 @@ export const PluginMarketplaceModal: React.FC<PluginMarketplaceModalProps> = ({
   );
   const [loadingPluginId, setLoadingPluginId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
-  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
   // Show auto-dismissing toast
-  const showToast = (text: string, icon = "⚡") => {
-    setToast({ text, icon });
+  const showToast = (text: string) => {
+    setToast({ text });
     setTimeout(() => {
       setToast(null);
     }, 2800);
   };
 
-  // Real-time physical keyboard keypress visualizer
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if typing in search box
-      if (document.activeElement?.tagName === "INPUT") return;
-
-      const key = e.key.toUpperCase();
-      setPressedKeys((prev) => {
-        const next = new Set(prev);
-        next.add(key);
-        if (e.shiftKey) next.add("SHIFT");
-        return next;
-      });
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      const key = e.key.toUpperCase();
-      setPressedKeys((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        if (!e.shiftKey) next.delete("SHIFT");
-        return next;
-      });
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      setPressedKeys(new Set());
-    };
-  }, [isOpen]);
-
   // Map of installed plugins
-  const installedMap = useMemo(() => {
-    const map = new Map<string, { status: string; source: string }>();
-    for (const p of installedPlugins) {
-      map.set(p.manifest.id, { status: p.status, source: p.source });
-    }
-    return map;
-  }, [installedPlugins]);
+  const installedMap = useMemo(
+    () => new Map(installedPlugins.map((p) => [p.manifest.id, { status: p.status, source: p.source }])),
+    [installedPlugins]
+  );
 
   // Combined full catalog (bundled marketplace catalog + any local vault-discovered plugins)
   const fullCatalog = useMemo(() => {
@@ -120,8 +80,6 @@ export const PluginMarketplaceModal: React.FC<PluginMarketplaceModalProps> = ({
           description: p.manifest.description,
           category: "Utilities",
           type: p.source === "builtin" ? "official" : "community",
-          downloads: 1,
-          stars: 5.0,
           tags: ["local", "vault"],
           permissions: p.manifest.permissions || [],
           iconBg: p.source === "builtin"
@@ -184,7 +142,7 @@ export const PluginMarketplaceModal: React.FC<PluginMarketplaceModalProps> = ({
     try {
       // 1. Activate optimistically in memory in 0ms
       await pluginManager.activatePlugin(plugin.id, manifest);
-      showToast(`${plugin.name} installed & activated!`, "🚀");
+      showToast(`${plugin.name} installed & activated`);
 
       // 2. Persist to vault filesystem asynchronously
       const manifestJson = JSON.stringify(manifest, null, 2);
@@ -200,7 +158,7 @@ export default {
       });
     } catch (err) {
       console.error("[Marketplace] Install failed:", err);
-      showToast(`Installation failed. Ensure a vault is open.`, "⚠️");
+      showToast("Installation failed. Ensure a vault is open.");
     } finally {
       setLoadingPluginId(null);
     }
@@ -212,7 +170,7 @@ export default {
     try {
       // 1. Deactivate & remove optimistically from memory in 0ms
       await pluginManager.uninstallPlugin(pluginId);
-      showToast(`Extension uninstalled`, "🗑️");
+      showToast("Extension uninstalled");
 
       // 2. Remove from vault filesystem in background
       uninstallCommunityPlugin(pluginId).catch((err) => {
@@ -230,13 +188,9 @@ export default {
     const isCurrentlyActive = installedMap.get(pluginId)?.status === "active";
     await pluginManager.togglePlugin(pluginId);
     showToast(
-      isCurrentlyActive ? "Extension disabled" : "Extension enabled & ready",
-      isCurrentlyActive ? "⏸️" : "✓"
+      isCurrentlyActive ? "Extension disabled" : "Extension enabled & ready"
     );
   };
-
-  // Helper to check if key is currently physically pressed
-  const isKeyPressed = (key: string) => pressedKeys.has(key.toUpperCase());
 
   if (!isOpen) return null;
 
@@ -320,19 +274,31 @@ export default {
                       onClick={() => setSelectedId(p.id)}
                     >
                       <div className="item-icon-box">
-                        <IconKeyboard size={18} />
+                        {p.id === "excalideck.study-calendar" || p.tags.includes("calendar") ? (
+                          <IconCalendar size={18} />
+                        ) : p.id === "excalideck.ghost-keys" ? (
+                          <IconKeyboard size={18} />
+                        ) : (
+                          <IconPlugin size={18} />
+                        )}
                       </div>
 
                       <div className="item-meta">
                         <div className="item-header-row">
                           <h4 className="item-name">{p.name}</h4>
                           {isInstalled && (
-                            <span className={`item-status-dot ${isActive ? "active" : "off"}`} title={isActive ? "Active" : "Disabled"} />
+                            <span
+                              className={`item-status-dot ${isActive ? "active" : "off"}`}
+                              title={isActive ? "Active" : "Disabled"}
+                            />
                           )}
                         </div>
                         <div className="item-author-tag">
                           <span>{p.author}</span>
                           {p.type === "official" && <span className="item-verified-badge">✓</span>}
+                          <span className="item-meta-dot">•</span>
+                          <span className="item-category-tag">{p.category}</span>
+                          <span className="item-version-tag">v{p.version}</span>
                         </div>
                         <p className="item-snippet">{p.description}</p>
                       </div>
@@ -353,14 +319,26 @@ export default {
               {/* Hero Header */}
               <div className="detail-hero-section">
                 <div className="detail-large-icon">
-                  <IconKeyboard size={28} />
+                  {selectedPlugin.id === "excalideck.study-calendar" || selectedPlugin.tags.includes("calendar") ? (
+                    <IconCalendar size={28} />
+                  ) : selectedPlugin.id === "excalideck.ghost-keys" ? (
+                    <IconKeyboard size={28} />
+                  ) : (
+                    <IconPlugin size={28} />
+                  )}
                 </div>
 
                 <div className="detail-hero-info">
                   <div className="detail-title-row">
                     <h3 className="detail-title">{selectedPlugin.name}</h3>
+                    <span className="detail-meta-pill detail-version-pill">
+                      v{selectedPlugin.version}
+                    </span>
+                    <span className="detail-meta-pill detail-category-pill">
+                      {selectedPlugin.category}
+                    </span>
                     {selectedPlugin.type === "official" && (
-                      <span className="detail-official-pill">
+                      <span className="detail-meta-pill detail-official-pill">
                         <IconCheck size={11} /> Official
                       </span>
                     )}
@@ -418,123 +396,7 @@ export default {
 
               {/* Detail Content Body */}
               <div className="detail-content-body">
-                {/* Stats Bar */}
-                <div className="detail-stats-bar">
-                  <div className="stat-block">
-                    <span className="stat-label">Category</span>
-                    <span className="stat-val">{selectedPlugin.category}</span>
-                  </div>
-                  <div className="stat-block">
-                    <span className="stat-label">Rating</span>
-                    <span className="stat-val" style={{ color: "#eab308" }}>
-                      <IconStar size={13} /> {selectedPlugin.stars}
-                    </span>
-                  </div>
-                  <div className="stat-block">
-                    <span className="stat-label">Downloads</span>
-                    <span className="stat-val">{selectedPlugin.downloads.toLocaleString()}</span>
-                  </div>
-                  <div className="stat-block">
-                    <span className="stat-label">Version</span>
-                    <span className="stat-val">v{selectedPlugin.version}</span>
-                  </div>
-                </div>
 
-                {/* Interactive Keycap Visualizer (Real-Time Physical Keypress Tester) */}
-                {selectedPlugin.id === "excalideck.ghost-keys" && (
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--text-muted)" }}>
-                        🎮 Live Modal Key Tester (Press keys on keyboard)
-                      </span>
-                      <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>
-                        ● Live Input Active
-                      </span>
-                    </div>
-
-                    <div className="shortcuts-grid">
-                      <div className="shortcut-card">
-                        <span className="shortcut-desc">Toggle Nav Mode</span>
-                        <div className="keycaps-group">
-                          <kbd className={`keycap ${isKeyPressed("ESCAPE") ? "pressed" : ""}`}>Escape</kbd>
-                          <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>/</span>
-                          <kbd className={`keycap ${isKeyPressed("ALT") ? "pressed" : ""}`}>Alt</kbd>
-                          <kbd className={`keycap ${isKeyPressed("K") ? "pressed" : ""}`}>K</kbd>
-                        </div>
-                      </div>
-
-                      <div className="shortcut-card">
-                        <span className="shortcut-desc">Exit to Draw Mode</span>
-                        <div className="keycaps-group">
-                          <kbd className={`keycap ${isKeyPressed("I") ? "pressed" : ""}`}>i</kbd>
-                          <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>/</span>
-                          <kbd className={`keycap ${isKeyPressed("ENTER") ? "pressed" : ""}`}>Enter</kbd>
-                        </div>
-                      </div>
-
-                      <div className="shortcut-card">
-                        <span className="shortcut-desc">Pan Canvas (Nav Mode)</span>
-                        <div className="keycaps-group">
-                          <kbd className={`keycap ${isKeyPressed("H") ? "pressed" : ""}`}>H</kbd>
-                          <kbd className={`keycap ${isKeyPressed("J") ? "pressed" : ""}`}>J</kbd>
-                          <kbd className={`keycap ${isKeyPressed("K") ? "pressed" : ""}`}>K</kbd>
-                          <kbd className={`keycap ${isKeyPressed("L") ? "pressed" : ""}`}>L</kbd>
-                        </div>
-                      </div>
-
-                      <div className="shortcut-card">
-                        <span className="shortcut-desc">Cycle Selection</span>
-                        <div className="keycaps-group">
-                          <kbd className={`keycap ${isKeyPressed("TAB") && !isKeyPressed("SHIFT") ? "pressed" : ""}`}>
-                            Tab
-                          </kbd>
-                          <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>/</span>
-                          <kbd className={`keycap ${isKeyPressed("TAB") && isKeyPressed("SHIFT") ? "pressed" : ""}`}>
-                            ⇧ Tab
-                          </kbd>
-                        </div>
-                      </div>
-
-                      <div className="shortcut-card">
-                        <span className="shortcut-desc">Spawn Shapes</span>
-                        <div className="keycaps-group">
-                          <kbd className={`keycap ${isKeyPressed("R") ? "pressed" : ""}`}>R</kbd>
-                          <kbd className={`keycap ${isKeyPressed("O") ? "pressed" : ""}`}>O</kbd>
-                          <kbd className={`keycap ${isKeyPressed("D") ? "pressed" : ""}`}>D</kbd>
-                          <kbd className={`keycap ${isKeyPressed("T") ? "pressed" : ""}`}>T</kbd>
-                        </div>
-                      </div>
-
-                      <div className="shortcut-card">
-                        <span className="shortcut-desc">Clone / Delete</span>
-                        <div className="keycaps-group">
-                          <kbd className={`keycap ${isKeyPressed("C") ? "pressed" : ""}`}>C</kbd>
-                          <kbd className={`keycap ${isKeyPressed("X") || isKeyPressed("DELETE") ? "pressed" : ""}`}>X</kbd>
-                        </div>
-                      </div>
-
-                      <div className="shortcut-card">
-                        <span className="shortcut-desc">Zoom / Fit to Content</span>
-                        <div className="keycaps-group">
-                          <kbd className={`keycap ${isKeyPressed("+") || isKeyPressed("=") ? "pressed" : ""}`}>+</kbd>
-                          <kbd className={`keycap ${isKeyPressed("-") || isKeyPressed("_") ? "pressed" : ""}`}>-</kbd>
-                          <kbd className={`keycap ${isKeyPressed("0") ? "pressed" : ""}`}>0</kbd>
-                          <kbd className={`keycap ${isKeyPressed("Z") ? "pressed" : ""}`}>Z</kbd>
-                        </div>
-                      </div>
-
-                      <div className="shortcut-card">
-                        <span className="shortcut-desc">Nudge Selected Shape</span>
-                        <div className="keycaps-group">
-                          <kbd className={`keycap ${isKeyPressed("ARROWLEFT") ? "pressed" : ""}`}>←</kbd>
-                          <kbd className={`keycap ${isKeyPressed("ARROWUP") ? "pressed" : ""}`}>↑</kbd>
-                          <kbd className={`keycap ${isKeyPressed("ARROWDOWN") ? "pressed" : ""}`}>↓</kbd>
-                          <kbd className={`keycap ${isKeyPressed("ARROWRIGHT") ? "pressed" : ""}`}>→</kbd>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Permissions Section */}
                 {selectedPlugin.permissions.length > 0 && (
@@ -589,8 +451,7 @@ export default {
         {/* Floating Toast Notification */}
         {toast && (
           <div className="marketplace-toast">
-            <span>{toast.icon}</span>
-            <span>{toast.text}</span>
+            <span className="marketplace-toast-text">{toast.text}</span>
           </div>
         )}
       </div>
