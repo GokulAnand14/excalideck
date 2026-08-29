@@ -93,6 +93,16 @@ Point Excalideck at any local folder on your machine, and it instantly turns tha
 - **Atomic Persistence**: Auto-saves happen in the background using native Rust file I/O with transactional safety to prevent canvas corruption.
 - **Self-Contained Assets**: Heavy embedded image blobs are extracted and isolated into a `.assets/` directory in the background, keeping your primary sketch files clean and diff-friendly.
 
+### How does this compare to the Obsidian Excalidraw plugin?
+
+The Obsidian plugin is incredible if you already live inside a text-first PKM (Personal Knowledge Management) system. **Excalideck** is built for people who want a dedicated, lightweight whiteboard without the overhead of Obsidian. 
+
+Because Excalideck is a standalone app built from scratch on Tauri and Rust, it handles a few things differently:
+- **Clean Git Diffs**: Instead of stuffing massive base64 image strings directly into your sketch files, a background Rust worker automatically extracts them into a separate `assets/` folder.
+- **Instant Switching**: The WebGL canvas stays alive in-memory, so hopping between files takes 0ms with zero loading or flickering.
+- **Less RAM**: Tauri is inherently lighter on system resources than Electron.
+- **Visual-First Plugins**: Excalideck features its own custom Plugin Engine. This allows contributors to build extensions 100% tailored for visual workflows (like our native Vim-style keyboard navigation) without having to hack around Obsidian's text-centric API.
+
 ---
 
 ### Built With
