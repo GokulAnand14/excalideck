@@ -46,8 +46,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { sidebarPanels } = usePluginUI();
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
-  const [collapsedPluginPanels, setCollapsedPluginPanels] = useState<Set<string>>(new Set());
+  const [expandedPluginPanels, setExpandedPluginPanels] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<'explorer' | 'plugins'>('explorer');
+
 
   // Move Modal state
   const [moveModalItem, setMoveModalItem] = useState<{
@@ -121,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleTogglePluginPanel = (panelId: string) => {
-    setCollapsedPluginPanels((prev) => {
+    setExpandedPluginPanels((prev) => {
       const next = new Set(prev);
       if (next.has(panelId)) {
         next.delete(panelId);
@@ -131,6 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return next;
     });
   };
+
 
   // --- Pointer Drag Listeners ---
   const handleItemPointerDown = (e: React.PointerEvent, node: FileTreeNode) => {
@@ -418,25 +420,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {sidebarPanels.length > 0 && (
               <div className="sidebar-plugin-panels">
                 {sidebarPanels.map((panel) => {
-                  const isCollapsed = collapsedPluginPanels.has(panel.id);
+                  const isExpanded = expandedPluginPanels.has(panel.id);
                   return (
                     <div
                       key={panel.id}
-                      className={`sidebar-plugin-panel ${isCollapsed ? "is-collapsed" : ""}`}
+                      className={`sidebar-plugin-panel ${!isExpanded ? "is-collapsed" : ""}`}
                     >
                       <button
                         type="button"
                         className="sidebar-plugin-panel-header"
                         onClick={() => handleTogglePluginPanel(panel.id)}
-                        aria-expanded={!isCollapsed}
-                        title={isCollapsed ? `Expand ${panel.title}` : `Collapse ${panel.title}`}
+                        aria-expanded={isExpanded}
+                        title={isExpanded ? `Collapse ${panel.title}` : `Expand ${panel.title}`}
                       >
                         <span className="sidebar-plugin-panel-title">{panel.title}</span>
                         <span className="sidebar-plugin-panel-chevron">
-                          {isCollapsed ? <IconChevronRight size={12} /> : <IconChevronDown size={12} />}
+                          {isExpanded ? <IconChevronDown size={12} /> : <IconChevronRight size={12} />}
                         </span>
                       </button>
-                      {!isCollapsed && (
+                      {isExpanded && (
                         <div className="sidebar-plugin-panel-content">
                           <PluginSlot render={panel.render} />
                         </div>
@@ -444,6 +446,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                   );
                 })}
+
               </div>
             )}
           </div>

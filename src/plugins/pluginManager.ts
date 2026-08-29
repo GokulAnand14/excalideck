@@ -10,7 +10,9 @@ import { createPluginStorage } from "./pluginStorage";
 import { discoverCommunityPlugins } from "./communityLoader";
 import { ghostKeysPlugin } from "./official/ghost-keys";
 import { studyCalendarPlugin } from "./official/study-calendar";
+import { habitTrackerPlugin } from "./official/habit-tracker";
 import { MARKETPLACE_CATALOG } from "./marketplace";
+
 
 interface RegisteredSidebarPanel {
   pluginId: string;
@@ -51,11 +53,18 @@ export class PluginManager {
   
   // App state references (set by React layer)
   private appStateGetters = {
-    getTheme: (): "light" | "dark" => "light",
+    getTheme: (): "light" | "dark" => {
+      if (typeof document !== "undefined") {
+        const d = document.documentElement.getAttribute("data-theme");
+        if (d === "dark" || d === "light") return d;
+      }
+      return "dark";
+    },
     getVaultPath: (): string | null => null,
     getCurrentFile: (): string | null => null,
     getAppVersion: (): string => "0.1.0",
   };
+
   
   private canvasGetters = {
     getElements: (): readonly any[] => [],
@@ -215,9 +224,14 @@ export class PluginManager {
           // Official pre-compiled plugin
           instance = { plugin: studyCalendarPlugin, disposables: [] };
           this.instances.set(id, instance);
+        } else if (id === "excalideck.habit-tracker") {
+          // Official pre-compiled plugin
+          instance = { plugin: habitTrackerPlugin, disposables: [] };
+          this.instances.set(id, instance);
         } else {
           throw new Error(`No module found for plugin "${id}"`);
         }
+
       }
 
       const context = this.buildContext(id);

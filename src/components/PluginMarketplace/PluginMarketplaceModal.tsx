@@ -8,7 +8,9 @@ import {
   IconExternalLink,
   IconKeyboard,
   IconCalendar,
+  IconActivity,
 } from "../common/Icons";
+
 import { usePluginManager } from "../../plugins/PluginProvider";
 import { usePluginList } from "../../plugins/usePlugins";
 import {
@@ -274,7 +276,9 @@ export default {
                       onClick={() => setSelectedId(p.id)}
                     >
                       <div className="item-icon-box">
-                        {p.id === "excalideck.study-calendar" || p.tags.includes("calendar") ? (
+                        {p.id === "excalideck.habit-tracker" || p.tags.includes("habit") ? (
+                          <IconActivity size={18} />
+                        ) : p.id === "excalideck.study-calendar" || p.tags.includes("calendar") ? (
                           <IconCalendar size={18} />
                         ) : p.id === "excalideck.ghost-keys" ? (
                           <IconKeyboard size={18} />
@@ -282,6 +286,7 @@ export default {
                           <IconPlugin size={18} />
                         )}
                       </div>
+
 
                       <div className="item-meta">
                         <div className="item-header-row">

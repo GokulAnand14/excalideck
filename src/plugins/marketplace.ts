@@ -87,4 +87,32 @@ Choose any month and insert a clean, hand-drawn boxy calendar grid directly onto
 - **Dark & Light Mode Support**: Adapts automatically to your active canvas theme.
     `,
   },
+  // --- 3rd Official Plugin: HabitTracker ---
+  {
+    id: "excalideck.habit-tracker",
+    name: "HabitTracker",
+    version: "1.0.0",
+    author: "Gokul (Official)",
+    description: "Minimalistic GitHub-style contribution heatmap and habit tracker. Log study time, track daily streaks, and render interactive color-shaded grids on your canvas.",
+    category: "Productivity",
+    type: "official",
+    tags: ["habit", "tracker", "github", "heatmap", "streak", "study", "productivity", "grid"],
+    homepage: "https://github.com/GokulAnand14/excalideck",
+    permissions: ["canvas:read", "canvas:write", "ui:sidebar", "commands:register", "storage:read", "storage:write"],
+    readme: `
+# HabitTracker: GitHub-Style Contribution Heatmap & Habit Engine
+
+Track daily study habits, maintain streaks, and render authentic GitHub-aesthetic contribution heatmaps directly inside Excalideck.
+
+### Features:
+- **GitHub Contribution Aesthetics**: 5-tier intensity shading, Mon/Wed/Fri row labels, and month headers.
+- **Dual Sidebar & Canvas Interactivity**: Click any square on your canvas or sidebar to instantly log hours with quick +0.5h / +1h / +2h presets.
+- **Real-Time Canvas Recoloring**: Canvas shapes automatically update their green shades as you log study time.
+- **Streak & Analytics Dashboard**: Real-time current streak, best streak, total study hours, and active day counts.
+- **Multi-Habit & Custom Themes**: Support for multiple habits with custom target hours and themes (GitHub Classic, Neon Emerald, Cyan Frost, Sunset Amber, Cyber Purple).
+- **Persistent Vault Storage**: Historical logs are preserved across files and drawings inside your vault's plugin storage.
+    `,
+  },
 ];
+
+

@@ -2,6 +2,7 @@ import { listCommunityPlugins, readPluginFile } from "../lib/tauri";
 import type { PluginManifest, ExcalideckPlugin } from "./types";
 import { ghostKeysPlugin } from "./official/ghost-keys";
 import { studyCalendarPlugin } from "./official/study-calendar";
+import { habitTrackerPlugin } from "./official/habit-tracker";
 
 export interface CommunityPluginEntry {
   manifest: PluginManifest;
@@ -12,7 +13,9 @@ export interface CommunityPluginEntry {
 const OFFICIAL_PLUGIN_MODULES: Record<string, ExcalideckPlugin> = {
   "excalideck.ghost-keys": ghostKeysPlugin,
   "excalideck.study-calendar": studyCalendarPlugin,
+  "excalideck.habit-tracker": habitTrackerPlugin,
 };
+
 
 /**
  * Discovers and loads community and installed official plugins from the vault's .excalideck/plugins/ directory.
