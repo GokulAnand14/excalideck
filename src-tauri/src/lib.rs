@@ -57,7 +57,10 @@ pub fn run() {
             commands::plugin_cmds::read_plugin_file,
             commands::plugin_cmds::install_community_plugin,
             commands::plugin_cmds::uninstall_community_plugin,
+            commands::updater_cmds::save_and_launch_installer,
+            commands::updater_cmds::launch_installer,
         ])
+
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

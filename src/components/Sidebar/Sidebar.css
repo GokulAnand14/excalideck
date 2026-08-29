@@ -10,11 +10,27 @@
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: center;
   padding: 12px 0;
-  gap: 16px;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
+
+.activity-bar-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.activity-bar-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
 
 .activity-btn {
   width: 32px;

@@ -12,6 +12,7 @@ import {
   IconPlugin,
   IconChevronRight,
   IconChevronDown,
+  IconSparkles,
 } from "../common/Icons";
 import "./Sidebar.css";
 
@@ -27,6 +28,9 @@ interface SidebarProps {
   onMoveFile: (src: string, destFolder: string) => void;
   onOpenVaultPicker?: () => void;
   onOpenMarketplace?: () => void;
+  onOpenAbout?: () => void;
+  currentVersion?: string;
+  hasUpdateAvailable?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -41,7 +45,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMoveFile,
   onOpenVaultPicker,
   onOpenMarketplace,
+  onOpenAbout,
+  currentVersion,
+  hasUpdateAvailable,
 }) => {
+
   const { promptDialog } = useDialog();
   const { sidebarPanels } = usePluginUI();
   const [searchQuery, setSearchQuery] = useState("");
@@ -289,21 +297,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className="sidebar-layout">
       <div className="activity-bar">
-        <button
-          className={`activity-btn ${activeTab === 'explorer' ? 'active' : ''}`}
-          onClick={() => setActiveTab('explorer')}
-          title="Explorer"
-        >
-          <IconNewFolder size={18} />
-        </button>
-        <button
-          className={`activity-btn ${activeTab === 'plugins' ? 'active' : ''}`}
-          onClick={() => setActiveTab('plugins')}
-          title="Plugins"
-        >
-          <IconPlugin size={18} />
-        </button>
+        <div className="activity-bar-top">
+          <button
+            className={`activity-btn ${activeTab === 'explorer' ? 'active' : ''}`}
+            onClick={() => setActiveTab('explorer')}
+            title="Explorer"
+          >
+            <IconNewFolder size={18} />
+          </button>
+          <button
+            className={`activity-btn ${activeTab === 'plugins' ? 'active' : ''}`}
+            onClick={() => setActiveTab('plugins')}
+            title="Plugins"
+          >
+            <IconPlugin size={18} />
+          </button>
+        </div>
+
+        {onOpenAbout && (
+          <div className="activity-bar-bottom">
+            <button
+              className={`activity-btn ${hasUpdateAvailable ? "has-update" : ""}`}
+              onClick={onOpenAbout}
+              title={`Excalideck v${currentVersion || "0.1.8"} • ${hasUpdateAvailable ? "Update Available!" : "Check for Updates"}`}
+              style={{ position: "relative" }}
+            >
+              <IconSparkles size={16} style={hasUpdateAvailable ? { color: "#f59e0b" } : undefined} />
+              {hasUpdateAvailable && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "3px",
+                    right: "3px",
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background: "#f59e0b",
+                    boxShadow: "0 0 6px #f59e0b",
+                  }}
+                />
+              )}
+            </button>
+          </div>
+        )}
       </div>
+
 
       <aside className="sidebar" style={{ width: sidebarWidth }}>
         {activeTab === 'explorer' && (

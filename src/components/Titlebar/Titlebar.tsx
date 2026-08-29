@@ -1,7 +1,8 @@
 import React from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useDialog } from "../../context/DialogContext";
-import { IconSidebar, IconSun, IconMoon, IconNewFile, IconPlugin } from "../common/Icons";
+import { IconSidebar, IconSun, IconMoon, IconNewFile, IconPlugin, IconSparkles } from "../common/Icons";
+
 import "./Titlebar.css";
 
 interface TitlebarProps {
@@ -14,6 +15,8 @@ interface TitlebarProps {
   onOpenVaultPicker?: () => void;
   onCreateDrawing?: (name: string) => void;
   onOpenMarketplace?: () => void;
+  onOpenAbout?: () => void;
+  hasUpdateAvailable?: boolean;
 }
 
 export const Titlebar: React.FC<TitlebarProps> = ({
@@ -26,7 +29,10 @@ export const Titlebar: React.FC<TitlebarProps> = ({
   onOpenVaultPicker,
   onCreateDrawing,
   onOpenMarketplace,
+  onOpenAbout,
+  hasUpdateAvailable,
 }) => {
+
   const { promptDialog } = useDialog();
 
   const handleMinimize = async () => {
@@ -167,6 +173,31 @@ export const Titlebar: React.FC<TitlebarProps> = ({
           </button>
         )}
 
+        {onOpenAbout && (
+          <button
+            className={`titlebar-icon-btn ${hasUpdateAvailable ? "has-update" : ""}`}
+            onClick={onOpenAbout}
+            title={hasUpdateAvailable ? "Update Available • Excalideck" : "About & Software Updates"}
+            style={{ position: "relative" }}
+          >
+            <IconSparkles size={15} style={hasUpdateAvailable ? { color: "#f59e0b" } : undefined} />
+            {hasUpdateAvailable && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "4px",
+                  right: "4px",
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: "#f59e0b",
+                  boxShadow: "0 0 6px #f59e0b",
+                }}
+              />
+            )}
+          </button>
+        )}
+
         <button
           className="titlebar-icon-btn"
           onClick={toggleTheme}
@@ -178,3 +209,4 @@ export const Titlebar: React.FC<TitlebarProps> = ({
     </div>
   );
 };
+

@@ -4,6 +4,7 @@ import { Sidebar } from "./components/Sidebar/Sidebar";
 import { ExcalidrawWrapper } from "./components/Canvas/ExcalidrawWrapper";
 import { VaultPicker } from "./components/VaultPicker/VaultPicker";
 import { UpdateModal } from "./components/common/UpdateModal";
+import { AboutModal } from "./components/common/AboutModal";
 import { PluginMarketplaceModal } from "./components/PluginMarketplace/PluginMarketplaceModal";
 import { useVault } from "./hooks/useVault";
 import { useFileTree } from "./hooks/useFileTree";
@@ -40,12 +41,17 @@ const App: React.FC = () => {
   } = useExcalidrawBridge();
 
   const {
+    currentVersion,
     updateState,
+    isChecking: isCheckingUpdates,
     isDownloading,
     downloadProgress,
     downloadedBytes,
     downloadTotal,
     error: updateError,
+    statusMessage: updateStatusMessage,
+    lastCheckedAt: lastUpdateCheckedAt,
+    checkForUpdates,
     downloadAndInstall,
     dismissUpdate,
   } = useUpdater();
@@ -53,6 +59,8 @@ const App: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showVaultPickerModal, setShowVaultPickerModal] = useState(false);
   const [showMarketplaceModal, setShowMarketplaceModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
+
 
   // ---- Plugin System Wiring ----
   const pluginManager = usePluginManager();
@@ -69,9 +77,10 @@ const App: React.FC = () => {
       getTheme: () => theme,
       getVaultPath: () => activeVault?.path ?? null,
       getCurrentFile: () => currentFile,
-      getAppVersion: () => "0.1.4",
+      getAppVersion: () => currentVersion || "0.1.8",
     });
-  }, [pluginManager, theme, activeVault, currentFile]);
+  }, [pluginManager, theme, activeVault, currentFile, currentVersion]);
+
 
   useEffect(() => {
     pluginManager.setCanvasGetters({
@@ -216,6 +225,8 @@ const App: React.FC = () => {
         onOpenVaultPicker={() => setShowVaultPickerModal(true)}
         onCreateDrawing={handleSelectAndCreate}
         onOpenMarketplace={() => setShowMarketplaceModal(true)}
+        onOpenAbout={() => setShowAboutModal(true)}
+        hasUpdateAvailable={!!updateState?.available}
       />
 
       {!vaultOpen ? (
@@ -239,6 +250,9 @@ const App: React.FC = () => {
               onMoveFile={handleMoveFile}
               onOpenVaultPicker={() => setShowVaultPickerModal(true)}
               onOpenMarketplace={() => setShowMarketplaceModal(true)}
+              onOpenAbout={() => setShowAboutModal(true)}
+              currentVersion={currentVersion}
+              hasUpdateAvailable={!!updateState?.available}
             />
           )}
           <ExcalidrawWrapper
@@ -268,8 +282,26 @@ const App: React.FC = () => {
         onClose={() => setShowMarketplaceModal(false)}
       />
 
-      {/* Auto-Updater Modal Prompt */}
-      {updateState && (
+      {/* About & Software Updates Modal */}
+      <AboutModal
+        isOpen={showAboutModal}
+        currentVersion={currentVersion}
+        updateState={updateState}
+        isChecking={isCheckingUpdates}
+        isDownloading={isDownloading}
+        downloadProgress={downloadProgress}
+        downloadedBytes={downloadedBytes}
+        downloadTotal={downloadTotal}
+        error={updateError}
+        statusMessage={updateStatusMessage}
+        lastCheckedAt={lastUpdateCheckedAt}
+        onCheckForUpdates={() => checkForUpdates(false)}
+        onInstallUpdate={downloadAndInstall}
+        onClose={() => setShowAboutModal(false)}
+      />
+
+      {/* Auto-Updater Modal Prompt (Standalone alert) */}
+      {updateState && !showAboutModal && (
         <UpdateModal
           update={updateState}
           isDownloading={isDownloading}
@@ -281,6 +313,7 @@ const App: React.FC = () => {
           onDismiss={dismissUpdate}
         />
       )}
+
 
       {/* Plugin Status Bar */}
       {statusBarItems.length > 0 && (
