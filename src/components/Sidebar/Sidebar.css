@@ -616,7 +616,7 @@
   background-color: var(--bg-sidebar);
 }
 
- 
- . p l u g i n s - v i e w   {   d i s p l a y :   f l e x ;   f l e x - d i r e c t i o n :   c o l u m n ;   f l e x :   1 ;   o v e r f l o w - y :   a u t o ;   } 
- 
- 
+
+.plugins-view { display: flex; flex-direction: column; flex: 1; overflow-y: auto; }
+
+
