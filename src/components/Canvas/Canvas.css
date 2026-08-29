@@ -15,13 +15,6 @@
   background-color: var(--bg-primary);
 }
 
-.canvas-container.is-hidden {
-  position: absolute;
-  visibility: hidden;
-  pointer-events: none;
-  z-index: -1;
-}
-
 .canvas-empty {
   flex: 1;
   display: flex;

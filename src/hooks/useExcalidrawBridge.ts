@@ -125,13 +125,7 @@ export const useExcalidrawBridge = () => {
     lastSavedContentRef.current = "";
     if (excalidrawAPIRef.current) {
       excalidrawAPIRef.current.resetScene();
-      excalidrawAPIRef.current.updateScene({
-        appState: {
-          zoom: { value: 1 },
-          scrollX: 0,
-          scrollY: 0,
-        },
-      });
+      excalidrawAPIRef.current = null;
     }
   }, [flush]);
 

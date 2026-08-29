@@ -34,17 +34,6 @@ export default defineConfig(async () => ({
     target: process.env.TAURI_ENV_PLATFORM === "windows" ? "chrome105" : "safari13",
     minify: !process.env.TAURI_ENV_DEBUG ? "esbuild" : false,
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
-    chunkSizeWarningLimit: 2000,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("@excalidraw")) return "excalidraw-vendor";
-            if (id.includes("react") || id.includes("react-dom")) return "react-vendor";
-            if (id.includes("katex")) return "katex-vendor";
-          }
-        },
-      },
-    },
+    chunkSizeWarningLimit: 5000,
   },
 }));

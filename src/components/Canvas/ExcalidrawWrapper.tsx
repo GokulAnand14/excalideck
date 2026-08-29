@@ -69,10 +69,41 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
     }
   }, [theme]);
 
+  if (!fileName) {
+    return (
+      <div className="canvas-wrapper-root">
+        <div className="canvas-empty">
+          <div className="canvas-empty-card">
+            <img src="/logo.png" className="empty-logo-img" alt="Excalideck" />
+            <h2>No Drawing Selected</h2>
+            <p className="empty-desc">
+              Choose a sketch from the sidebar or start a new drawing in your vault.
+            </p>
+            {onCreateDrawing && (
+              <button className="empty-create-btn" onClick={handleQuickCreate}>
+                <IconNewFile size={16} />
+                <span>Create New Drawing</span>
+              </button>
+            )}
+            <div className="empty-shortcuts">
+              <div className="shortcut-item">
+                <span className="shortcut-key">Auto-save</span>
+                <span className="shortcut-label">Syncs changes to vault</span>
+              </div>
+              <div className="shortcut-item">
+                <span className="shortcut-key">Export</span>
+                <span className="shortcut-label">PNG / SVG / JSON</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="canvas-wrapper-root">
-      {/* Excalidraw Canvas (Always kept alive in DOM for 0ms switching) */}
-      <div className={`canvas-container ${!fileName ? "is-hidden" : ""}`}>
+      <div className="canvas-container">
         <Excalidraw
           excalidrawAPI={handleAPIMount}
           initialData={
@@ -114,35 +145,6 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
           </WelcomeScreen>
         </Excalidraw>
       </div>
-
-      {/* Empty State Overlay when no file is selected */}
-      {!fileName && (
-        <div className="canvas-empty">
-          <div className="canvas-empty-card">
-            <img src="/logo.png" className="empty-logo-img" alt="Excalideck" />
-            <h2>No Drawing Selected</h2>
-            <p className="empty-desc">
-              Choose a sketch from the sidebar or start a new drawing in your vault.
-            </p>
-            {onCreateDrawing && (
-              <button className="empty-create-btn" onClick={handleQuickCreate}>
-                <IconNewFile size={16} />
-                <span>Create New Drawing</span>
-              </button>
-            )}
-            <div className="empty-shortcuts">
-              <div className="shortcut-item">
-                <span className="shortcut-key">Auto-save</span>
-                <span className="shortcut-label">Syncs changes to vault</span>
-              </div>
-              <div className="shortcut-item">
-                <span className="shortcut-key">Export</span>
-                <span className="shortcut-label">PNG / SVG / JSON</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
