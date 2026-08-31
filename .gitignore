@@ -26,3 +26,8 @@ bun.lockb
 .env.*
 *.key
 *.key.pub
+
+# Agents & Skills
+.agents/
+skills-lock.json
+

@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "landing:dev": "bun run --cwd landing dev",
+    "landing:build": "bun run --cwd landing build",
+    "landing:preview": "bun run --cwd landing preview",
     "tauri": "tauri",
     "typecheck": "tsc --noEmit",
     "release": "node scripts/release.js"

@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --dot-color: rgba(0, 0, 0, 0.07);
+    --dot-size: 24px;
+  }
+
+  .dark {
+    --dot-color: rgba(255, 255, 255, 0.07);
+    --dot-size: 24px;
+  }
+
+  body {
+    background-color: #faf9f6;
+    color: #18181b;
+  }
+
+  .dark body {
+    background-color: #0c0d0e;
+    color: #f4f4f5;
+  }
+}
+
+/* Authentic Dot-Grid Canvas Background */
+.canvas-grid {
+  background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+  background-size: var(--dot-size) var(--dot-size);
+  background-position: 0 0;
+}
+
+/* Subtle glassmorphism */
+.mac-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .mac-glass {
+  background: rgba(18, 18, 20, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+/* macOS Window Drop Shadow */
+.mac-window-shadow {
+  box-shadow: 
+    0 24px 48px -12px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 8px 16px -4px rgba(0, 0, 0, 0.08);
+}
+
+.dark .mac-window-shadow {
+  box-shadow: 
+    0 30px 60px -12px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 24px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 150, 150, 0.45);
+}
+
+/* Sticker Hover */
+.sticker {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: grab;
+  user-select: none;
+}
+.sticker:active {
+  cursor: grabbing;
+  transform: scale(0.96) rotate(-1deg);
+}
+
+/* Rough Sketch Canvas Cursor */
+.canvas-cursor-pen {
+  cursor: crosshair;
+}
