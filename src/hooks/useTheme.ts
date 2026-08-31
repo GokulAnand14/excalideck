@@ -5,11 +5,8 @@ const getInitialTheme = (): "light" | "dark" => {
   if (typeof window !== "undefined") {
     const saved = localStorage.getItem("theme");
     if (saved === "dark" || saved === "light") return saved;
-    const dataTheme = document.documentElement.getAttribute("data-theme");
-    if (dataTheme === "dark" || dataTheme === "light") return dataTheme;
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
   }
-  return "dark"; // Defaulting modern desktop to dark
+  return "dark"; // Always default to dark mode even if system is in light mode
 };
 
 export const useTheme = () => {
@@ -21,17 +18,17 @@ export const useTheme = () => {
     localStorage.setItem("theme", initial);
 
     getAppConfig().then(config => {
-      if (config.theme === "dark" || (config.theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-        setTheme("dark");
-        document.documentElement.setAttribute("data-theme", "dark");
-        localStorage.setItem("theme", "dark");
-      } else if (config.theme === "light") {
+      if (config.theme === "light") {
         setTheme("light");
         document.documentElement.setAttribute("data-theme", "light");
         localStorage.setItem("theme", "light");
+      } else {
+        setTheme("dark");
+        document.documentElement.setAttribute("data-theme", "dark");
+        localStorage.setItem("theme", "dark");
       }
     }).catch(() => {
-      // Keep initial theme
+      // Keep dark theme
     });
   }, []);
 
