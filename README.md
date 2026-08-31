@@ -1,6 +1,7 @@
 <!-- PROJECT SHIELDS -->
 <div align="center">
 
+[![Website: excalideck.vercel.app][website-shield]][website-url]
 [![Tauri v2][tauri-shield]][tauri-url]
 [![React][react-shield]][react-url]
 [![TypeScript][ts-shield]][ts-url]
@@ -13,7 +14,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/GokulAnand14/excalideck">
+  <a href="https://excalideck.vercel.app">
     <img src="logo.png" alt="Excalideck Logo" width="100" height="100" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);">
   </a>
 
@@ -25,13 +26,15 @@
     Native desktop performance, nested vaults, zero cloud lock-in, and atomic file sync.
     <br />
     <br />
-    <a href="#getting-started"><strong>Quick Start »</strong></a>
+    <a href="https://excalideck.vercel.app/"><strong>🌐 Live Website »</strong></a>
     &nbsp;&middot;&nbsp;
-    <a href="#features">Explore Features</a>
+    <a href="#downloads--platforms"><strong>Download Desktop App »</strong></a>
     &nbsp;&middot;&nbsp;
-    <a href="#architecture">Architecture</a>
+    <a href="#getting-started">Quick Start</a>
     &nbsp;&middot;&nbsp;
-    <a href="#acknowledgments">Acknowledgments</a>
+    <a href="#features">Features</a>
+    &nbsp;&middot;&nbsp;
+    <a href="#architecture--data-model">Architecture</a>
   </p>
 </div>
 
@@ -308,6 +311,8 @@ Excalideck is built on top of incredible open-source foundations. Huge thanks an
 * [Vite](https://vitejs.dev/) & [React](https://react.dev/) — For frontend developer experience and performance.
 
 <!-- MARKDOWN BADGES & URLS -->
+[website-shield]: https://img.shields.io/badge/Website-excalideck.vercel.app-6366f1?style=for-the-badge&logo=vercel&logoColor=white
+[website-url]: https://excalideck.vercel.app/
 [tauri-shield]: https://img.shields.io/badge/Tauri-v2.0-24C8DB?style=for-the-badge&logo=tauri&logoColor=white
 [tauri-url]: https://tauri.app/
 [react-shield]: https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black
