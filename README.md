@@ -70,13 +70,16 @@
 <!-- DOWNLOADS -->
 ## Downloads & Platforms
 
-Pre-compiled native binaries and installers for all major desktop operating systems are available directly on [GitHub Releases][releases-url].
+Pre-compiled native binaries and installers for all major desktop and mobile platforms are available directly below:
 
-| Platform | Architecture | Available Formats | Download Link |
+| Platform | Architecture | Available Formats | Direct Download Link |
 | :--- | :--- | :--- | :--- |
-| ![Windows][win-badge] **Windows** | `x64` / `x86_64` | `.msi` (Windows Installer)<br>`.exe` (NSIS Setup / Portable) | [**Download Windows**][releases-url] |
-| ![macOS][mac-badge] **macOS** | Apple Silicon (`arm64`)<br>Intel (`x86_64`) | `.dmg` (Disk Image)<br>`.app` (Universal Binary) | [**Download macOS**][releases-url] |
-| ![Linux][linux-badge] **Linux** | `x86_64` | `.AppImage` (Universal Linux)<br>`.deb` (Debian / Ubuntu) | [**Download Linux**][releases-url] |
+| ![Windows][win-badge] **Windows** | `x64` / `x86_64` | `.exe` (NSIS Setup)<br>`.msi` (Windows Installer) | [**Download .exe**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_x64-setup.exe) &middot; [**Download .msi**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_x64_en-US.msi) |
+| ![macOS][mac-badge] **macOS** | Apple Silicon (`arm64`)<br>Intel (`x86_64`) | `.dmg` (Universal Disk Image)<br>`.tar.gz` (App Bundle) | [**Download .dmg**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_universal.dmg) &middot; [**Download .tar.gz**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_universal.app.tar.gz) |
+| ![Linux][linux-badge] **Linux** | `x86_64` | `.AppImage` (Universal Linux)<br>`.deb` (Debian / Ubuntu) | [**Download .AppImage**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_amd64.AppImage) &middot; [**Download .deb**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_amd64.deb) |
+| ![Android][android-badge] **Android** | `arm64-v8a` / `x86_64` | `.apk` (Universal Package) | [**Download .apk**](https://github.com/GokulAnand14/excalideck/releases/latest/download/app-universal-debug.apk) |
+
+> 💡 All releases and SHA-256 checksums are also available on [GitHub Releases][releases-url].
 
 ---
 
@@ -92,6 +95,7 @@ Point Excalideck at any local folder on your machine, and it instantly turns tha
 ### Why Excalideck?
 
 - **Local-First & Git-Friendly**: Your drawings are standard JSON `.excalidraw` files in your filesystem. Version control them with Git, back them up with Syncthing, or open them in any editor.
+- **Cross-Platform & Mobile Ready**: Full support for Windows, macOS, Linux, and Android (with iOS readiness). Create and switch between multiple vaults in isolated sandboxed storage with zero permission hassles.
 - **Zero-Latency Switching**: Switching between complex drawings happens in 0ms without unmounting or reinitializing the canvas.
 - **Atomic Persistence**: Auto-saves happen in the background using native Rust file I/O with transactional safety to prevent canvas corruption.
 - **Self-Contained Assets**: Heavy embedded image blobs are extracted and isolated into a `.assets/` directory in the background, keeping your primary sketch files clean and diff-friendly.
@@ -337,4 +341,6 @@ Excalideck is built on top of incredible open-source foundations. Huge thanks an
 [win-badge]: https://img.shields.io/badge/Windows-0078D6?style=flat-square&logo=windows&logoColor=white
 [mac-badge]: https://img.shields.io/badge/macOS-000000?style=flat-square&logo=apple&logoColor=white
 [linux-badge]: https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black
+[android-badge]: https://img.shields.io/badge/Android-3DDC84?style=flat-square&logo=android&logoColor=white
 [releases-url]: https://github.com/GokulAnand14/excalideck/releases
+

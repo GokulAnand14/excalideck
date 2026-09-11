@@ -40,8 +40,6 @@
         { "path": "**" }
       ]
     },
-    "window-state:default",
-    "updater:default",
     "process:default"
   ]
 }

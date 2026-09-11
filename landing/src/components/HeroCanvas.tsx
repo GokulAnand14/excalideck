@@ -3,7 +3,7 @@ import { Github, ArrowDown, Heart } from 'lucide-react';
 import { sound } from '../utils/sound';
 import { AnimatedCanvasBackdrop } from './AnimatedCanvasBackdrop';
 import { detectOS, getOSDownloadInfo, OSDownloadInfo } from '../utils/os';
-import { AppleIcon, WindowsIcon, LinuxIcon } from './Icons';
+import { AppleIcon, WindowsIcon, LinuxIcon, AndroidIcon } from './Icons';
 import { animate, stagger } from 'animejs';
 
 export const HeroCanvas: React.FC = () => {
@@ -145,6 +145,8 @@ export const HeroCanvas: React.FC = () => {
         return <WindowsIcon className="w-5 h-5" />;
       case 'linux':
         return <LinuxIcon className="w-5 h-5" />;
+      case 'android':
+        return <AndroidIcon className="w-5 h-5" />;
       case 'mac':
       default:
         return <AppleIcon className="w-5 h-5" />;

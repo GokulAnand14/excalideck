@@ -100,8 +100,17 @@ export const useUpdater = () => {
       });
   }, []);
 
+  const isMobileClient = typeof navigator !== "undefined" && /ipad|iphone|ipod|android/i.test(navigator.userAgent);
+
   const checkForUpdates = useCallback(
     async (silent: boolean = false) => {
+      if (isMobileClient) {
+        if (!silent) {
+          setStatusMessage("Mobile app updates are managed via your app store.");
+        }
+        return;
+      }
+
       setIsChecking(true);
       setError(null);
       if (!silent) setStatusMessage("Checking for updates...");

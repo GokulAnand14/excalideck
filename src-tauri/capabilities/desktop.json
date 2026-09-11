@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-utils/schema.json",
+  "identifier": "desktop-capabilities",
+  "description": "Desktop-specific capabilities for Excalideck",
+  "windows": ["main", "*"],
+  "platforms": ["windows", "macOS", "linux"],
+  "permissions": [
+    "window-state:default",
+    "updater:default"
+  ]
+}

@@ -1,5 +1,8 @@
 .titlebar {
-  height: var(--titlebar-height);
+  height: calc(var(--titlebar-height) + var(--sat));
+  padding-top: var(--sat);
+  padding-left: max(12px, var(--sal));
+  padding-right: max(12px, var(--sar));
   background-color: var(--bg-titlebar);
   display: flex;
   justify-content: space-between;
@@ -7,10 +10,60 @@
   user-select: none;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
-  padding: 0 12px;
   position: relative;
   z-index: 100;
   transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+
+.titlebar.is-mobile {
+  height: calc(48px + var(--sat));
+  padding-left: max(8px, var(--sal));
+  padding-right: max(8px, var(--sar));
+}
+
+.titlebar.is-mobile .titlebar-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+}
+
+.titlebar.is-mobile .titlebar-action-btn.primary {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.titlebar.is-mobile .doc-pill {
+  max-width: 160px;
+  padding: 4px 10px;
+}
+
+.mobile-center-vault {
+  max-width: 170px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-weight: 600;
+  border-color: var(--border-color);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-center-vault:active {
+  transform: scale(0.94);
+}
+
+.vault-pill-arrow {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 2px;
 }
 
 /* Left Section */
@@ -91,26 +144,33 @@
 /* Titlebar Buttons */
 .titlebar-icon-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-secondary);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .titlebar-icon-btn:hover {
   background-color: var(--hover-bg);
   color: var(--text-primary);
+  border-color: var(--border-subtle);
+  transform: translateY(-1px);
+}
+
+.titlebar-icon-btn:active {
+  transform: scale(0.92);
 }
 
 .titlebar-icon-btn.active {
   color: var(--accent-color);
   background-color: var(--accent-subtle);
+  border-color: var(--accent-color);
 }
 
 /* Vault Pill */
@@ -118,15 +178,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   background: var(--hover-bg);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   max-width: 140px;
 }
 
@@ -140,7 +200,12 @@
 .vault-pill-btn:hover {
   background: var(--active-bg);
   color: var(--text-primary);
-  border-color: var(--border-color);
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.vault-pill-btn:active {
+  transform: scale(0.94);
 }
 
 .vault-pill-text {
@@ -161,9 +226,9 @@
 .doc-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: var(--bg-card);
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 9999px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
@@ -171,13 +236,35 @@
   color: var(--text-primary);
   font-weight: 500;
   max-width: 320px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+.doc-pill:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.15);
 }
 
 .doc-status-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: pulseDot 2.4s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.9);
+  }
 }
 
 .doc-title {
@@ -206,7 +293,7 @@
   width: 16px;
   height: 16px;
   object-fit: contain;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 /* Right Section */
@@ -226,7 +313,7 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   border: 1px solid transparent;
 }
 
@@ -237,4 +324,11 @@
 
 .titlebar-action-btn.primary:hover {
   background: var(--accent-hover);
+  transform: translateY(-1px);
 }
+
+.titlebar-action-btn.primary:active {
+  transform: scale(0.95);
+}
+
+

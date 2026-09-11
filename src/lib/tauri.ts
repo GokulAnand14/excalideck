@@ -3,9 +3,23 @@ import { VaultInfo, RecentVault, AppConfig } from "../types/vault";
 import { FileTreeNode } from "../types/fileTree";
 import { DrawingData } from "../types/drawing";
 
+// Platform commands
+export interface PlatformInfo {
+  os: "ios" | "android" | "windows" | "macos" | "linux" | "unknown";
+  isMobile: boolean;
+  isDesktop: boolean;
+  defaultVaultPath?: string | null;
+}
+
+export const getPlatformInfo = () => invoke<PlatformInfo>("get_platform_info");
+
 // Vault commands
 export const openVault = (path: string) => invoke<VaultInfo>("open_vault", { path });
 export const createVault = (path: string, name: string) => invoke<VaultInfo>("create_vault", { path, name });
+export const listAppVaults = () => invoke<VaultInfo[]>("list_app_vaults");
+export const deleteVault = (path: string) => invoke("delete_vault", { path });
+export const getDefaultVaultPath = () => invoke<string>("get_default_vault_path");
+export const initDefaultVault = () => invoke<VaultInfo>("init_default_vault");
 export const getRecentVaults = () => invoke<RecentVault[]>("get_recent_vaults");
 export const closeVault = () => invoke("close_vault");
 

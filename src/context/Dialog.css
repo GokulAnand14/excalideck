@@ -199,3 +199,40 @@
     transform: scale(1) translateY(0);
   }
 }
+
+/* Mobile & Touch Adjustments */
+@media (max-width: 768px) {
+  .custom-dialog-backdrop {
+    align-items: flex-start;
+    padding: max(40px, var(--sat, 20px)) 16px max(16px, var(--sab, 16px));
+  }
+
+  .custom-dialog-card {
+    max-width: 100%;
+    border-radius: var(--radius-lg);
+  }
+
+  .dialog-close-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  /* 16px font-size prevents iOS WebKit viewport auto-zoom */
+  .dialog-input {
+    font-size: 16px;
+    padding: 11px 14px;
+    min-height: 44px;
+  }
+
+  .dialog-message-text {
+    font-size: 14px;
+  }
+
+  .dialog-btn {
+    min-height: 44px;
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+}
+

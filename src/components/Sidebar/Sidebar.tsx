@@ -5,6 +5,7 @@ import { DragGhost } from "./DragGhost";
 import { MoveModal } from "./MoveModal";
 import { useDialog } from "../../context/DialogContext";
 import { usePluginUI, PluginSlot } from "../../plugins";
+import { usePlatform } from "../../hooks/usePlatform";
 import {
   IconNewFile,
   IconNewFolder,
@@ -31,6 +32,7 @@ interface SidebarProps {
   onOpenAbout?: () => void;
   currentVersion?: string;
   hasUpdateAvailable?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -48,8 +50,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAbout,
   currentVersion,
   hasUpdateAvailable,
+  onCloseMobile,
 }) => {
-
+  const { isDesktop, isMobile } = usePlatform();
   const { promptDialog } = useDialog();
   const { sidebarPanels } = usePluginUI();
   const [searchQuery, setSearchQuery] = useState("");
@@ -144,8 +147,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // --- Pointer Drag Listeners ---
   const handleItemPointerDown = (e: React.PointerEvent, node: FileTreeNode) => {
-    // Only primary mouse button
-    if (e.button !== 0) return;
+    // Only primary mouse button and not on mobile touchscreens
+    if (e.button !== 0 || isMobile || e.pointerType === "touch") return;
 
     // Don't drag if clicking buttons
     const target = e.target as HTMLElement;
@@ -294,8 +297,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const totalDrawings = countDrawings(tree);
 
+  const handleSelectFile = (path: string) => {
+    onFileSelect(path);
+    if (isMobile && onCloseMobile) {
+      onCloseMobile();
+    }
+  };
+
   return (
-    <div className="sidebar-layout">
+    <>
+      {isMobile && (
+        <div
+          className="sidebar-backdrop"
+          onClick={onCloseMobile}
+          aria-label="Close sidebar"
+        />
+      )}
+      <div className={`sidebar-layout ${isMobile ? "is-mobile" : ""}`}>
       <div className="activity-bar">
         <div className="activity-bar-top">
           <button
@@ -343,7 +361,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
 
-      <aside className="sidebar" style={{ width: sidebarWidth }}>
+      <aside className="sidebar" style={{ width: isMobile ? undefined : sidebarWidth }}>
         {activeTab === 'explorer' && (
           <>
             {/* Header */}
@@ -370,6 +388,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <IconNewFolder size={15} />
                 </button>
+                {isMobile && onCloseMobile && (
+                  <button
+                    className="sidebar-action-btn mobile-drawer-close-btn"
+                    onClick={onCloseMobile}
+                    title="Close Sidebar"
+                    aria-label="Close Sidebar"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
 
@@ -405,7 +433,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   searchQuery={searchQuery}
                   collapsedFolders={collapsedFolders}
                   onToggleExpand={handleToggleExpand}
-                  onFileSelect={onFileSelect}
+                  onFileSelect={handleSelectFile}
                   onCreateDrawing={onCreateDrawing}
                   onCreateFolder={onCreateFolder}
                   onDeleteFile={onDeleteFile}
@@ -511,7 +539,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           />
         )}
       </aside>
-      <div className="sidebar-resizer" onMouseDown={handleResizeStart} />
+      {isDesktop && <div className="sidebar-resizer" onMouseDown={handleResizeStart} />}
     </div>
-  );
+  </>
+);
 };

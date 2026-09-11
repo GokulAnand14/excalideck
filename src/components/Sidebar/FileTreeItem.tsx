@@ -253,7 +253,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
 
         <span className="item-name">{displayName}</span>
 
-        {/* Action icons on hover for folders */}
+        {/* Action icons for folders */}
         {isFolder && (
           <div className="folder-hover-actions">
             <button
@@ -272,6 +272,19 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
             </button>
           </div>
         )}
+
+        <button
+          className="item-options-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            setContextMenu({ x: Math.min(rect.right, window.innerWidth - 180), y: rect.bottom });
+          }}
+          title="More options"
+          aria-label="More options"
+        >
+          ⋯
+        </button>
 
         {isActive && !isFolder && <span className="active-indicator" />}
       </div>

@@ -389,3 +389,29 @@
     transform: scale(1) translateY(0);
   }
 }
+
+@media (max-width: 768px) {
+  .about-modal-backdrop {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: max(24px, var(--sat, 20px));
+  }
+
+  .about-modal-card {
+    max-height: calc(100dvh - max(48px, var(--sat, 20px) * 2));
+    overflow-y: auto;
+  }
+
+  .about-close-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .about-btn-done {
+    min-height: 44px;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}
+

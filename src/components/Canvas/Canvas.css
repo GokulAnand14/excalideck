@@ -4,6 +4,7 @@
   position: relative;
   overflow: hidden;
   display: flex;
+  touch-action: none;
 }
 
 .canvas-container {
@@ -13,7 +14,29 @@
   position: relative;
   overflow: hidden;
   background-color: var(--bg-primary);
+  touch-action: none;
 }
+
+.canvas-container .excalidraw {
+  padding-bottom: var(--sab);
+}
+
+/* Clean Excalidraw styling using native variables */
+.canvas-container .excalidraw {
+  --border-radius-lg: 12px;
+  --border-radius-md: 8px;
+}
+
+.canvas-container .excalidraw .ToolIcon__icon {
+  border-radius: 10px;
+  transition: transform 0.12s ease;
+}
+
+.canvas-container .excalidraw .ToolIcon__icon:active {
+  transform: scale(0.94);
+}
+
+
 
 .canvas-empty {
   flex: 1;
@@ -113,3 +136,28 @@
   font-size: 10px;
   color: var(--text-muted);
 }
+
+@media (max-width: 768px) {
+  .empty-shortcuts {
+    display: none;
+  }
+
+  .canvas-empty {
+    padding: 16px;
+  }
+
+  .canvas-empty-card {
+    padding: 28px 18px;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .empty-create-btn {
+    min-height: 44px;
+    padding: 12px 18px;
+    width: 100%;
+    justify-content: center;
+    font-size: 15px;
+  }
+}
+

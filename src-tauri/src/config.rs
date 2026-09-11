@@ -33,8 +33,8 @@ impl Default for AppConfig {
 }
 
 impl AppConfig {
-    pub fn load() -> Self {
-        let config_path = Self::get_config_path();
+    pub fn load(base_dir: Option<&std::path::Path>) -> Self {
+        let config_path = Self::get_config_path(base_dir);
         if let Some(path) = config_path {
             if path.exists() {
                 if let Ok(content) = fs::read_to_string(&path) {
@@ -47,8 +47,8 @@ impl AppConfig {
         AppConfig::default()
     }
 
-    pub fn save(&self) {
-        if let Some(path) = Self::get_config_path() {
+    pub fn save(&self, base_dir: Option<&std::path::Path>) {
+        if let Some(path) = Self::get_config_path(base_dir) {
             if let Some(parent) = path.parent() {
                 let _ = fs::create_dir_all(parent);
             }
@@ -61,7 +61,10 @@ impl AppConfig {
         }
     }
 
-    fn get_config_path() -> Option<PathBuf> {
+    fn get_config_path(base_dir: Option<&std::path::Path>) -> Option<PathBuf> {
+        if let Some(dir) = base_dir {
+            return Some(dir.join("config.json"));
+        }
         ProjectDirs::from("com", "excalideck", "excalideck").map(|proj_dirs| {
             proj_dirs.config_dir().join("config.json")
         })

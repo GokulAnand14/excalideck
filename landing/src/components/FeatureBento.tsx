@@ -8,7 +8,8 @@ import {
   ShieldCheck, 
   Sparkles, 
   Folder,
-  Check
+  Check,
+  Smartphone
 } from 'lucide-react';
 import { animate } from 'animejs';
 
@@ -121,6 +122,21 @@ export const FeatureBento: React.FC = () => {
         'Universal binaries for Apple Silicon (M1/M2/M3/M4), Intel, Windows 11, and Linux',
       ],
       techSpec: 'Tauri v2 · WebView2 / WebKit · Native Updater',
+    },
+    {
+      id: 'mobile',
+      icon: <Smartphone className="w-4 h-4" />,
+      label: 'Mobile & Tablets',
+      badge: 'Android & iOS',
+      title: 'Seamless Mobile & Tablet Experience',
+      tagline: 'Take your sketchbooks anywhere with dedicated mobile touch optimizations and sandboxed vaults.',
+      bullets: [
+        'Sandboxed multi-vault storage: create and switch multiple sketchbooks without permission barriers',
+        'Touch-first responsive canvas: fluid zoom, panning, and palm rejection with mobile toolbars',
+        'Adaptive frameless layout: mobile titlebars, sliding drawer file manager, and quick drawing switcher',
+        'Standalone APK distribution: zero-dependency universal Android package ready to install',
+      ],
+      techSpec: 'Tauri Mobile v2 · Scoped Storage · Touch Gestures',
     },
   ];
 

@@ -2,6 +2,69 @@
   display: flex;
   height: 100%;
   position: relative;
+  z-index: 50;
+}
+
+.sidebar-layout.is-mobile {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 1000;
+  box-shadow: 8px 0 36px rgba(0, 0, 0, 0.45);
+  max-width: min(340px, 86vw);
+  background: var(--bg-sidebar);
+  border-top-right-radius: 24px;
+  border-bottom-right-radius: 24px;
+  overflow: hidden;
+  animation: slideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-layout.is-mobile .activity-bar {
+  padding-top: max(14px, var(--sat));
+  padding-bottom: max(14px, var(--sab));
+}
+
+
+.sidebar-layout.is-mobile aside.sidebar {
+  width: calc(100vw - 48px);
+  max-width: calc(min(340px, 86vw) - 48px);
+  padding-top: max(8px, var(--sat));
+  padding-bottom: max(8px, var(--sab));
+}
+
+.mobile-drawer-close-btn {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.mobile-drawer-close-btn:hover {
+  color: var(--text-primary);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 999;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .activity-bar {
@@ -33,9 +96,9 @@
 
 
 .activity-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -43,17 +106,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .activity-btn:hover {
   color: var(--text-primary);
   background: var(--hover-bg);
+  transform: translateY(-1px);
+}
+
+.activity-btn:active {
+  transform: scale(0.92);
 }
 
 .activity-btn.active {
   color: var(--color-primary);
+  background: var(--accent-subtle);
 }
+
 
 .plugins-view {
   display: flex;
@@ -164,20 +234,26 @@
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-sm);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar-action-btn:hover {
   background-color: var(--hover-bg);
   color: var(--text-primary);
+  transform: translateY(-1px);
 }
+
+.sidebar-action-btn:active {
+  transform: scale(0.92);
+}
+
 
 /* Search Bar */
 .sidebar-search {
@@ -394,6 +470,43 @@
 .folder-action-btn:hover {
   background-color: var(--active-bg);
   color: var(--text-primary);
+}
+
+.item-options-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+  font-weight: bold;
+  opacity: 0;
+  margin-left: auto;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.file-tree-item:hover .item-options-btn,
+.file-tree-item.active .item-options-btn {
+  opacity: 1;
+}
+
+.item-options-btn:hover {
+  background-color: var(--active-bg);
+  color: var(--text-primary);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .item-options-btn {
+    opacity: 0.85;
+    width: 28px;
+    height: 28px;
+  }
 }
 
 .active-indicator {
@@ -634,5 +747,38 @@
 
 
 .plugins-view { display: flex; flex-direction: column; flex: 1; overflow-y: auto; }
+
+@media (max-width: 768px) {
+  .move-modal {
+    width: 92%;
+    max-width: 380px;
+    border-radius: var(--radius-lg);
+  }
+
+  .move-modal-header {
+    padding: 16px 18px;
+  }
+
+  .move-modal-close {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .move-modal-list {
+    max-height: 55vh;
+  }
+
+  .move-modal-item {
+    min-height: 44px;
+    padding: 12px 14px;
+    font-size: 15px;
+    gap: 12px;
+  }
+}
+
 
 

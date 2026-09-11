@@ -14,11 +14,24 @@ pub fn run() {
 
     let app_state = AppState::new();
 
-    tauri::Builder::default()
+    #[allow(unused_mut)]
+    let mut builder = tauri::Builder::default()
         .setup(|app| {
             eprintln!("[Excalideck] Tauri application setup complete.");
+
+            // Initialize app config directory across desktop and mobile
+            let config_dir = app.path().app_config_dir()
+                .or_else(|_| app.path().app_data_dir())
+                .or_else(|_| app.path().app_local_data_dir())
+                .ok();
+            if let Some(dir) = config_dir {
+                let state_handle = app.state::<Mutex<AppState>>();
+                let mut state = state_handle.lock().unwrap();
+                state.set_config_dir(dir);
+            }
             
-            // Explicitly set runtime window and taskbar icon
+            // Explicitly set runtime window and taskbar icon on desktop
+            #[cfg(not(any(target_os = "android", target_os = "ios")))]
             if let Some(window) = app.get_webview_window("main") {
                 if let Ok(icon) = tauri::image::Image::from_bytes(include_bytes!("../icons/128x128.png")) {
                     let _ = window.set_icon(icon);
@@ -30,11 +43,22 @@ pub fn run() {
         .manage(Mutex::new(app_state))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init());
+
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
+
+    builder
         .invoke_handler(tauri::generate_handler![
+            commands::platform_cmds::get_platform_info,
             commands::vault_cmds::open_vault,
             commands::vault_cmds::create_vault,
+            commands::vault_cmds::list_app_vaults,
+            commands::vault_cmds::delete_vault,
+            commands::vault_cmds::get_default_vault_path,
+            commands::vault_cmds::init_default_vault,
             commands::vault_cmds::get_recent_vaults,
             commands::vault_cmds::close_vault,
             commands::file_cmds::read_drawing,
@@ -60,7 +84,6 @@ pub fn run() {
             commands::updater_cmds::save_and_launch_installer,
             commands::updater_cmds::launch_installer,
         ])
-
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

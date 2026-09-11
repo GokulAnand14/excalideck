@@ -9,16 +9,26 @@ import { PluginMarketplaceModal } from "./components/PluginMarketplace/PluginMar
 import { useVault } from "./hooks/useVault";
 import { useFileTree } from "./hooks/useFileTree";
 import { useExcalidrawBridge } from "./hooks/useExcalidrawBridge";
-import { useTheme } from "./hooks/useTheme";
 import { useUpdater } from "./hooks/useUpdater";
+import { usePlatform } from "./hooks/usePlatform";
+import { useTheme } from "./hooks/useTheme";
 import { usePluginManager } from "./plugins/PluginProvider";
 import { usePluginUI, PluginSlot } from "./plugins";
 import "./App.css";
 
 const App: React.FC = () => {
+  const { isMobile, isDesktop } = usePlatform();
   const { theme, toggleTheme } = useTheme();
-  const { activeVault, recentVaults, openVault, createVault, loading } =
-    useVault();
+  const {
+    activeVault,
+    recentVaults,
+    appVaults,
+    openVault,
+    openDefaultVault,
+    createVault,
+    deleteVault,
+    loading,
+  } = useVault();
   const vaultOpen = !!activeVault;
 
   const {
@@ -175,11 +185,37 @@ const App: React.FC = () => {
     setShowVaultPickerModal(false);
   };
 
+  const handleOpenDefaultVault = async () => {
+    await closeFile();
+    const vault = await openDefaultVault();
+    if (vault) {
+      setShowVaultPickerModal(false);
+      loadFile("Welcome to Excalideck.excalidraw").catch(() => {});
+    }
+  };
+
   const handleCreateVault = async (path: string, name: string) => {
     await closeFile();
-    await createVault(path, name);
-    setShowVaultPickerModal(false);
+    const vault = await createVault(path, name);
+    if (vault) {
+      setShowVaultPickerModal(false);
+    }
   };
+
+  const handleDeleteVault = async (path: string) => {
+    try {
+      await deleteVault(path);
+    } catch (e) {
+      console.error("[App] Failed to delete vault:", e);
+    }
+  };
+
+  // Auto-open welcome file if a vault is active on startup and no file is selected
+  useEffect(() => {
+    if (vaultOpen && !currentFile) {
+      loadFile("Welcome to Excalideck.excalidraw").catch(() => {});
+    }
+  }, [vaultOpen, currentFile, loadFile]);
 
   const handleSelectAndCreate = async (name: string, folder?: string) => {
     const relPath = await createDrawing(name, folder);
@@ -232,8 +268,11 @@ const App: React.FC = () => {
       {!vaultOpen ? (
         <VaultPicker
           recentVaults={recentVaults}
+          appVaults={appVaults}
           onOpenVault={handleOpenVault}
           onCreateVault={handleCreateVault}
+          onDeleteVault={handleDeleteVault}
+          onOpenDefaultVault={handleOpenDefaultVault}
         />
       ) : (
         <div className="app-content">
@@ -253,6 +292,7 @@ const App: React.FC = () => {
               onOpenAbout={() => setShowAboutModal(true)}
               currentVersion={currentVersion}
               hasUpdateAvailable={!!updateState?.available}
+              onCloseMobile={() => setSidebarOpen(false)}
             />
           )}
           <ExcalidrawWrapper
@@ -269,9 +309,12 @@ const App: React.FC = () => {
       {vaultOpen && showVaultPickerModal && (
         <VaultPicker
           recentVaults={recentVaults}
+          appVaults={appVaults}
           activeVaultPath={activeVault?.path}
           onOpenVault={handleOpenVault}
           onCreateVault={handleCreateVault}
+          onDeleteVault={handleDeleteVault}
+          onOpenDefaultVault={handleOpenDefaultVault}
           onClose={() => setShowVaultPickerModal(false)}
         />
       )}
@@ -300,8 +343,8 @@ const App: React.FC = () => {
         onClose={() => setShowAboutModal(false)}
       />
 
-      {/* Auto-Updater Modal Prompt (Standalone alert) */}
-      {updateState && !showAboutModal && (
+      {/* Auto-Updater Modal Prompt (Standalone alert for desktop) */}
+      {isDesktop && updateState && !showAboutModal && (
         <UpdateModal
           update={updateState}
           isDownloading={isDownloading}

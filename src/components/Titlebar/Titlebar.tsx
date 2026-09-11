@@ -1,6 +1,7 @@
 import React from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useDialog } from "../../context/DialogContext";
+import { usePlatform } from "../../hooks/usePlatform";
 import { IconSidebar, IconSun, IconMoon, IconNewFile, IconPlugin, IconSparkles } from "../common/Icons";
 
 import "./Titlebar.css";
@@ -32,10 +33,11 @@ export const Titlebar: React.FC<TitlebarProps> = ({
   onOpenAbout,
   hasUpdateAvailable,
 }) => {
-
+  const { isDesktop, isMobile } = usePlatform();
   const { promptDialog } = useDialog();
 
   const handleMinimize = async () => {
+    if (!isDesktop) return;
     try {
       const appWindow = getCurrentWindow();
       await appWindow.minimize();
@@ -82,47 +84,51 @@ export const Titlebar: React.FC<TitlebarProps> = ({
     : null;
 
   return (
-    <div className="titlebar" data-tauri-drag-region>
+    <div className={`titlebar ${isMobile ? "is-mobile" : ""}`} data-tauri-drag-region={isDesktop ? "" : undefined}>
       {/* Left: Authentic macOS Traffic Lights & Navigation */}
-      <div className="titlebar-left" data-tauri-drag-region>
-        <div className="traffic-lights">
-          <button
-            className="traffic-light close"
-            onClick={handleClose}
-            title="Close"
-            aria-label="Close"
-          >
-            <span className="traffic-icon">✕</span>
-          </button>
-          <button
-            className="traffic-light minimize"
-            onClick={handleMinimize}
-            title="Minimize"
-            aria-label="Minimize"
-          >
-            <span className="traffic-icon">−</span>
-          </button>
-          <button
-            className="traffic-light maximize"
-            onClick={handleMaximize}
-            title="Maximize"
-            aria-label="Maximize"
-          >
-            <span className="traffic-icon">+</span>
-          </button>
-        </div>
-
-        <div className="titlebar-divider" />
+      <div className="titlebar-left" data-tauri-drag-region={isDesktop ? "" : undefined}>
+        {isDesktop && (
+          <>
+            <div className="traffic-lights">
+              <button
+                className="traffic-light close"
+                onClick={handleClose}
+                title="Close"
+                aria-label="Close"
+              >
+                <span className="traffic-icon">✕</span>
+              </button>
+              <button
+                className="traffic-light minimize"
+                onClick={handleMinimize}
+                title="Minimize"
+                aria-label="Minimize"
+              >
+                <span className="traffic-icon">−</span>
+              </button>
+              <button
+                className="traffic-light maximize"
+                onClick={handleMaximize}
+                title="Maximize"
+                aria-label="Maximize"
+              >
+                <span className="traffic-icon">+</span>
+              </button>
+            </div>
+            <div className="titlebar-divider" />
+          </>
+        )}
 
         <button
           className={`titlebar-icon-btn ${sidebarOpen ? "active" : ""}`}
           onClick={toggleSidebar}
           title={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+          aria-label={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
         >
-          <IconSidebar size={15} />
+          <IconSidebar size={isMobile ? 18 : 15} />
         </button>
 
-        {vaultName && (
+        {vaultName && !isMobile && (
           <button
             className="vault-pill-btn"
             onClick={onOpenVaultPicker}
@@ -134,16 +140,26 @@ export const Titlebar: React.FC<TitlebarProps> = ({
         )}
       </div>
 
-      {/* Center: Active Document Breadcrumb */}
-      <div className="titlebar-center" data-tauri-drag-region>
+      {/* Center: Active Document Breadcrumb or Mobile Vault Pill */}
+      <div className="titlebar-center" data-tauri-drag-region={isDesktop ? "" : undefined}>
         {cleanFileName ? (
-          <div className="doc-pill" data-tauri-drag-region>
+          <div className="doc-pill" data-tauri-drag-region={isDesktop ? "" : undefined}>
             <span className="doc-status-dot" />
-            <span className="doc-title" data-tauri-drag-region>{cleanFileName}</span>
-            <span className="doc-ext">.excalidraw</span>
+            <span className="doc-title" data-tauri-drag-region={isDesktop ? "" : undefined}>{cleanFileName}</span>
+            {!isMobile && <span className="doc-ext">.excalidraw</span>}
           </div>
+        ) : isMobile && vaultName ? (
+          <button
+            className="vault-pill-btn mobile-center-vault"
+            onClick={onOpenVaultPicker}
+            title="Switch Vault"
+          >
+            <img src="/logo.png" className="vault-pill-logo" alt="Vault Logo" />
+            <span className="vault-pill-text">{vaultName}</span>
+            <span className="vault-pill-arrow">▾</span>
+          </button>
         ) : (
-          <div className="app-badge" data-tauri-drag-region>
+          <div className="app-badge" data-tauri-drag-region={isDesktop ? "" : undefined}>
             <img src="/logo.png" className="app-badge-logo-img" alt="Excalideck" />
             <span className="app-badge-name">Excalideck</span>
           </div>
@@ -159,11 +175,11 @@ export const Titlebar: React.FC<TitlebarProps> = ({
             title="New Drawing"
           >
             <IconNewFile size={14} />
-            <span>New</span>
+            {!isMobile && <span>New</span>}
           </button>
         )}
 
-        {onOpenMarketplace && (
+        {!isMobile && onOpenMarketplace && (
           <button
             className="titlebar-icon-btn"
             onClick={onOpenMarketplace}
@@ -173,15 +189,15 @@ export const Titlebar: React.FC<TitlebarProps> = ({
           </button>
         )}
 
-        {onOpenAbout && (
+        {!isMobile && onOpenAbout && (
           <button
-            className={`titlebar-icon-btn ${hasUpdateAvailable ? "has-update" : ""}`}
+            className={`titlebar-icon-btn ${isDesktop && hasUpdateAvailable ? "has-update" : ""}`}
             onClick={onOpenAbout}
-            title={hasUpdateAvailable ? "Update Available • Excalideck" : "About & Software Updates"}
+            title={isDesktop && hasUpdateAvailable ? "Update Available • Excalideck" : "About Excalideck"}
             style={{ position: "relative" }}
           >
-            <IconSparkles size={15} style={hasUpdateAvailable ? { color: "#f59e0b" } : undefined} />
-            {hasUpdateAvailable && (
+            <IconSparkles size={15} style={isDesktop && hasUpdateAvailable ? { color: "#f59e0b" } : undefined} />
+            {isDesktop && hasUpdateAvailable && (
               <span
                 style={{
                   position: "absolute",

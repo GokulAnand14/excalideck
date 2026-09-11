@@ -20,8 +20,11 @@
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-color);
   width: 100%;
-  max-width: 480px;
-  padding: 32px;
+  max-width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: clamp(20px, 5vw, 32px);
   color: var(--text-primary);
   position: relative;
   animation: scaleUp 0.15s ease-out;
@@ -116,6 +119,23 @@
 .vault-option-card.primary:hover {
   background: var(--accent-subtle);
   border-color: var(--accent-hover);
+}
+
+.vault-option-card.default-vault {
+  background: linear-gradient(135deg, var(--accent-subtle) 0%, rgba(99, 102, 241, 0.12) 100%);
+  border-color: var(--accent-color);
+  border-width: 1.5px;
+}
+
+.vault-option-card.default-vault:hover {
+  border-color: var(--accent-hover);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.2);
+}
+
+.vault-option-card.default-vault .option-icon-wrapper.default-icon {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
 }
 
 .option-icon-wrapper {
@@ -232,9 +252,86 @@
   white-space: nowrap;
 }
 
+.recent-vault-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.recent-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.recent-drawings-count {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 .recent-time {
   font-size: 11px;
   color: var(--text-muted);
-  flex-shrink: 0;
-  margin-left: 8px;
 }
+
+.recent-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.recent-delete-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .vault-picker-modal {
+    padding: 20px 16px;
+    max-height: calc(100dvh - 24px);
+    width: 95%;
+  }
+
+  .vault-modal-close {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .vault-option-card {
+    min-height: 52px;
+    padding: 12px 14px;
+  }
+
+  .recent-vault-item {
+    min-height: 52px;
+    padding: 10px 12px;
+  }
+
+  .recent-delete-btn {
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+  }
+
+  .recent-drawings-count {
+    font-size: 11px;
+  }
+}
+
+
