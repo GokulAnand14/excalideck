@@ -62,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           excalideck
         </span>
         <span className='text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-semibold'>
-          v0.1.9
+          v0.2.0
         </span>
       </div>
 

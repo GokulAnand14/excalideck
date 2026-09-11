@@ -10,24 +10,24 @@ export interface OSDownloadInfo {
 }
 
 export const GITHUB_REPO_URL = 'https://github.com/GokulAnand14/excalideck';
-export const RELEASE_VERSION = 'v0.1.9';
+export const RELEASE_VERSION = 'v0.2.0';
 
 export const DIRECT_DOWNLOADS = {
   mac: {
-    dmg: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.1.9_universal.dmg`,
+    dmg: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.2.0_universal.dmg`,
     tar: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_universal.app.tar.gz`,
   },
   windows: {
-    exe: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.1.9_x64-setup.exe`,
-    msi: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.1.9_x64_en-US.msi`,
+    exe: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.2.0_x64-setup.exe`,
+    msi: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.2.0_x64_en-US.msi`,
   },
   linux: {
-    appImage: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.1.9_amd64.AppImage`,
-    deb: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.1.9_amd64.deb`,
-    rpm: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck-0.1.9-1.x86_64.rpm`,
+    appImage: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.2.0_amd64.AppImage`,
+    deb: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.2.0_amd64.deb`,
+    rpm: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck-0.2.0-1.x86_64.rpm`,
   },
   android: {
-    apk: `${GITHUB_REPO_URL}/releases/latest/download/app-universal-debug.apk`,
+    apk: `${GITHUB_REPO_URL}/releases/download/${RELEASE_VERSION}/Excalideck_0.2.0_universal.apk`,
     localDevApk: 'http://192.168.31.113:8080/app-universal-debug.apk',
   },
 };
@@ -63,7 +63,7 @@ export function getOSDownloadInfo(os: DetectedOS): OSDownloadInfo {
         badge: 'Android 8.0+ (Universal)',
         downloadUrl: DIRECT_DOWNLOADS.android.apk,
         secondaryText: 'ARM64 & x86_64 APK Package',
-        filename: 'app-universal-debug.apk',
+        filename: 'Excalideck_0.2.0_universal.apk',
       };
     case 'windows':
       return {
@@ -72,7 +72,7 @@ export function getOSDownloadInfo(os: DetectedOS): OSDownloadInfo {
         badge: 'Windows 10 / 11 (64-bit)',
         downloadUrl: DIRECT_DOWNLOADS.windows.exe,
         secondaryText: '.exe setup & .msi package',
-        filename: 'Excalideck_0.1.9_x64-setup.exe',
+        filename: 'Excalideck_0.2.0_x64-setup.exe',
       };
     case 'linux':
       return {
@@ -81,7 +81,7 @@ export function getOSDownloadInfo(os: DetectedOS): OSDownloadInfo {
         badge: 'Universal x86_64',
         downloadUrl: DIRECT_DOWNLOADS.linux.appImage,
         secondaryText: '.AppImage & .deb packages',
-        filename: 'Excalideck_0.1.9_amd64.AppImage',
+        filename: 'Excalideck_0.2.0_amd64.AppImage',
       };
     case 'mac':
     default:
@@ -91,7 +91,7 @@ export function getOSDownloadInfo(os: DetectedOS): OSDownloadInfo {
         badge: 'macOS Sonoma 14.0+',
         downloadUrl: DIRECT_DOWNLOADS.mac.dmg,
         secondaryText: 'Universal DMG for Apple Silicon & Intel',
-        filename: 'Excalideck_0.1.9_universal.dmg',
+        filename: 'Excalideck_0.2.0_universal.dmg',
       };
   }
 }

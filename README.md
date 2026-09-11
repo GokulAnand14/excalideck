@@ -74,10 +74,10 @@ Pre-compiled native binaries and installers for all major desktop and mobile pla
 
 | Platform | Architecture | Available Formats | Direct Download Link |
 | :--- | :--- | :--- | :--- |
-| ![Windows][win-badge] **Windows** | `x64` / `x86_64` | `.exe` (NSIS Setup)<br>`.msi` (Windows Installer) | [**Download .exe**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_x64-setup.exe) &middot; [**Download .msi**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_x64_en-US.msi) |
-| ![macOS][mac-badge] **macOS** | Apple Silicon (`arm64`)<br>Intel (`x86_64`) | `.dmg` (Universal Disk Image)<br>`.tar.gz` (App Bundle) | [**Download .dmg**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_universal.dmg) &middot; [**Download .tar.gz**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_universal.app.tar.gz) |
-| ![Linux][linux-badge] **Linux** | `x86_64` | `.AppImage` (Universal Linux)<br>`.deb` (Debian / Ubuntu) | [**Download .AppImage**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_amd64.AppImage) &middot; [**Download .deb**](https://github.com/GokulAnand14/excalideck/releases/download/v0.1.9/Excalideck_0.1.9_amd64.deb) |
-| ![Android][android-badge] **Android** | `arm64-v8a` / `x86_64` | `.apk` (Universal Package) | [**Download .apk**](https://github.com/GokulAnand14/excalideck/releases/latest/download/app-universal-debug.apk) |
+| ![Windows][win-badge] **Windows** | `x64` / `x86_64` | `.exe` (NSIS Setup)<br>`.msi` (Windows Installer) | [**Download .exe**](https://github.com/GokulAnand14/excalideck/releases/download/v0.2.0/Excalideck_0.2.0_x64-setup.exe) &middot; [**Download .msi**](https://github.com/GokulAnand14/excalideck/releases/download/v0.2.0/Excalideck_0.2.0_x64_en-US.msi) |
+| ![macOS][mac-badge] **macOS** | Apple Silicon (`arm64`)<br>Intel (`x86_64`) | `.dmg` (Universal Disk Image)<br>`.tar.gz` (App Bundle) | [**Download .dmg**](https://github.com/GokulAnand14/excalideck/releases/download/v0.2.0/Excalideck_0.2.0_universal.dmg) &middot; [**Download .tar.gz**](https://github.com/GokulAnand14/excalideck/releases/download/v0.2.0/Excalideck_universal.app.tar.gz) |
+| ![Linux][linux-badge] **Linux** | `x86_64` | `.AppImage` (Universal Linux)<br>`.deb` (Debian / Ubuntu) | [**Download .AppImage**](https://github.com/GokulAnand14/excalideck/releases/download/v0.2.0/Excalideck_0.2.0_amd64.AppImage) &middot; [**Download .deb**](https://github.com/GokulAnand14/excalideck/releases/download/v0.2.0/Excalideck_0.2.0_amd64.deb) |
+| ![Android][android-badge] **Android** | `arm64-v8a` / `x86_64` | `.apk` (Universal Package) | [**Download .apk**](https://github.com/GokulAnand14/excalideck/releases/download/v0.2.0/Excalideck_0.2.0_universal.apk) |
 
 > 💡 All releases and SHA-256 checksums are also available on [GitHub Releases][releases-url].
 

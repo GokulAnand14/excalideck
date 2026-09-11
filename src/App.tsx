@@ -87,7 +87,7 @@ const App: React.FC = () => {
       getTheme: () => theme,
       getVaultPath: () => activeVault?.path ?? null,
       getCurrentFile: () => currentFile,
-      getAppVersion: () => currentVersion || "0.1.8",
+      getAppVersion: () => currentVersion || "0.2.0",
     });
   }, [pluginManager, theme, activeVault, currentFile, currentVersion]);
 
