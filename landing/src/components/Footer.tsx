@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Github, Sparkles, ArrowUp } from 'lucide-react';
 import { sound } from '../utils/sound';
 import { animate } from 'animejs';
+import { RELEASE_VERSION } from '../utils/os';
 
 export const Footer: React.FC = () => {
   const footerRef = useRef<HTMLElement>(null);
@@ -57,7 +58,7 @@ export const Footer: React.FC = () => {
             <div className='font-extrabold text-sm text-zinc-900 dark:text-white flex items-center gap-1.5'>
               <span>excalideck</span>
               <span className='text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-semibold'>
-                v0.1.9
+                {RELEASE_VERSION}
               </span>
             </div>
             <div className='text-xs text-zinc-500 dark:text-zinc-400 font-mono mt-0.5'>

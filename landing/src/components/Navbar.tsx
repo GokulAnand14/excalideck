@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Volume2, VolumeX, Moon, Sun, Github } from 'lucide-react';
 import { sound } from '../utils/sound';
-import { detectOS, getOSDownloadInfo, OSDownloadInfo } from '../utils/os';
+import { detectOS, getOSDownloadInfo, OSDownloadInfo, RELEASE_VERSION } from '../utils/os';
 import { AppleIcon, WindowsIcon, LinuxIcon, AndroidIcon } from './Icons';
 import { animate } from 'animejs';
 
@@ -62,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           excalideck
         </span>
         <span className='text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-semibold'>
-          v0.2.0
+          {RELEASE_VERSION}
         </span>
       </div>
 
