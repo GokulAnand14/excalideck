@@ -33,10 +33,14 @@ pub fn get_vaults_root_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
         if let Ok(doc_dir) = app.path().document_dir() {
-            return Ok(doc_dir);
+            let vaults_dir = doc_dir.join("Excalideck");
+            let _ = std::fs::create_dir_all(&vaults_dir);
+            return Ok(vaults_dir);
         }
         if let Ok(data_dir) = app.path().app_data_dir() {
-            return Ok(data_dir);
+            let vaults_dir = data_dir.join("vaults");
+            let _ = std::fs::create_dir_all(&vaults_dir);
+            return Ok(vaults_dir);
         }
         Err("Could not find documents or app data directory".to_string())
     }
@@ -143,7 +147,9 @@ pub fn list_app_vaults(app: tauri::AppHandle) -> Result<Vec<VaultInfo>, String> 
     if let Ok(entries) = std::fs::read_dir(&root) {
         for entry in entries.flatten() {
             let p = entry.path();
-            if p.is_dir() {
+            // Only list directories that contain the .excalideck marker,
+            // preventing arbitrary folders from being surfaced as vaults.
+            if p.is_dir() && p.join(".excalideck").is_dir() {
                 let v = Vault::new(p);
                 vaults.push(v.get_info());
             }
@@ -175,11 +181,31 @@ pub fn delete_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri:
     Ok(())
 }
 
+
 #[tauri::command]
 pub fn get_recent_vaults(state: State<'_, Mutex<AppState>>, app: tauri::AppHandle) -> Result<Vec<RecentVault>, String> {
     let mut state_guard = state.lock().unwrap();
     state_guard.ensure_config_dir(&app);
-    Ok(state_guard.config.recent_vaults.clone())
+
+    // Prune stale entries: path must exist and contain the .excalideck marker.
+    // This cleans up any random Documents subfolders that were picked up before the fix.
+    let valid: Vec<RecentVault> = state_guard
+        .config
+        .recent_vaults
+        .iter()
+        .filter(|rv| {
+            let p = std::path::PathBuf::from(&rv.path);
+            p.is_dir() && p.join(".excalideck").is_dir()
+        })
+        .cloned()
+        .collect();
+
+    if valid.len() != state_guard.config.recent_vaults.len() {
+        state_guard.config.recent_vaults = valid.clone();
+        state_guard.save_config();
+    }
+
+    Ok(valid)
 }
 
 #[tauri::command]

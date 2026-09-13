@@ -1,7 +1,7 @@
 {
   "name": "excalideck",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "homepage": "https://excalideck.vercel.app",
   "type": "module",
   "scripts": {
