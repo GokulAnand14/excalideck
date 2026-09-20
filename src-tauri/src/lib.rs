@@ -42,7 +42,6 @@ pub fn run() {
         })
         .manage(Mutex::new(app_state))
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init());
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -81,8 +80,6 @@ pub fn run() {
             commands::plugin_cmds::read_plugin_file,
             commands::plugin_cmds::install_community_plugin,
             commands::plugin_cmds::uninstall_community_plugin,
-            commands::updater_cmds::save_and_launch_installer,
-            commands::updater_cmds::launch_installer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

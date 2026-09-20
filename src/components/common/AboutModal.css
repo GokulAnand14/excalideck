@@ -302,6 +302,26 @@
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
 
+.about-install-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+
+.about-manual-download-link {
+  font-size: 11px;
+  color: var(--text-muted, #8b949e);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.about-manual-download-link:hover {
+  color: var(--color-primary, #6366f1);
+}
+
 .about-description {
   font-size: 11.5px;
   line-height: 1.5;

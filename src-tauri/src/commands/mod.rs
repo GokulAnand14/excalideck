@@ -4,6 +4,5 @@ pub mod file_cmds;
 pub mod platform_cmds;
 pub mod plugin_cmds;
 pub mod tree_cmds;
-pub mod updater_cmds;
 pub mod vault_cmds;
 

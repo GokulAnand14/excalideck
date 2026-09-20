@@ -7,7 +7,7 @@ import type {
 } from "./types";
 import { PluginEventBus } from "./eventBus";
 import { createPluginStorage } from "./pluginStorage";
-import { discoverCommunityPlugins } from "./communityLoader";
+import { discoverCommunityPlugins, loadCommunityPluginCode } from "./communityLoader";
 import { ghostKeysPlugin } from "./official/ghost-keys";
 import { studyCalendarPlugin } from "./official/study-calendar";
 import { habitTrackerPlugin } from "./official/habit-tracker";
@@ -149,13 +149,15 @@ export class PluginManager {
           source: "community",
         });
 
-        if (!existingInstance) {
-          this.instances.set(entry.manifest.id, {
-            plugin: entry.module,
-            disposables: [],
-          });
-        } else {
-          existingInstance.plugin = entry.module;
+        if (entry.module) {
+          if (!existingInstance) {
+            this.instances.set(entry.manifest.id, {
+              plugin: entry.module,
+              disposables: [],
+            });
+          } else {
+            existingInstance.plugin = entry.module;
+          }
         }
       }
       this.notifyUIChange();
@@ -229,7 +231,14 @@ export class PluginManager {
           instance = { plugin: habitTrackerPlugin, disposables: [] };
           this.instances.set(id, instance);
         } else {
-          throw new Error(`No module found for plugin "${id}"`);
+          // On-demand load community plugin code when explicitly activated
+          const mainFile = info.manifest.main || "index.js";
+          const mod = await loadCommunityPluginCode(id, mainFile);
+          if (!mod || typeof mod.activate !== "function") {
+            throw new Error(`Plugin "${id}" does not export a valid activate() function`);
+          }
+          instance = { plugin: mod, disposables: [] };
+          this.instances.set(id, instance);
         }
 
       }
@@ -296,6 +305,14 @@ export class PluginManager {
       await this.deactivatePlugin(id);
     } else {
       await this.activatePlugin(id);
+    }
+  }
+
+  async activateBuiltins(): Promise<void> {
+    for (const [id, info] of this.plugins) {
+      if ((info.source === "builtin" || id.startsWith("excalideck.")) && info.status === "installed") {
+        await this.activatePlugin(id);
+      }
     }
   }
 

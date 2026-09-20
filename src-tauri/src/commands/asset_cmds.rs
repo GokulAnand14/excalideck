@@ -1,20 +1,44 @@
 use tauri::State;
 use std::sync::Mutex;
 use crate::state::AppState;
+use crate::files::security::validate_asset_id;
 use std::fs;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+
+fn safe_extension_from_mime(mime: &str) -> &str {
+    match mime.to_lowercase().as_str() {
+        "image/jpeg" | "image/jpg" => "jpg",
+        "image/png" => "png",
+        "image/svg+xml" => "svg",
+        "image/webp" => "webp",
+        "image/gif" => "gif",
+        "image/bmp" => "bmp",
+        "image/avif" => "avif",
+        _ => "png",
+    }
+}
 
 #[tauri::command]
 #[allow(non_snake_case)]
 pub fn save_asset(id: String, data: String, mimeType: String, state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    validate_asset_id(&id)?;
     let state_guard = state.lock().unwrap();
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     let assets_dir = vault.path.join("assets");
     fs::create_dir_all(&assets_dir).map_err(|e| e.to_string())?;
     
-    let ext = mimeType.split('/').next_back().unwrap_or("png");
+    let ext = safe_extension_from_mime(&mimeType);
     let file_name = format!("{}.{}", id, ext);
     let asset_path = assets_dir.join(&file_name);
+    
+    // Canonical boundary check
+    let canonical_assets = assets_dir.canonicalize().map_err(|e| e.to_string())?;
+    if let Some(parent) = asset_path.parent() {
+        let canonical_parent = parent.canonicalize().map_err(|e| e.to_string())?;
+        if !canonical_parent.starts_with(&canonical_assets) {
+            return Err("Asset path escapes assets directory".to_string());
+        }
+    }
     
     let decoded = BASE64.decode(data).map_err(|e| e.to_string())?;
     fs::write(&asset_path, decoded).map_err(|e| e.to_string())?;
@@ -24,6 +48,7 @@ pub fn save_asset(id: String, data: String, mimeType: String, state: State<'_, M
 
 #[tauri::command]
 pub fn get_asset_path(id: String, state: State<'_, Mutex<AppState>>) -> Result<Option<String>, String> {
+    validate_asset_id(&id)?;
     let state_guard = state.lock().unwrap();
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     let dirs = [vault.path.join("assets"), vault.path.join(".excalideck").join("assets")];

@@ -109,7 +109,11 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             onClick={onInstall}
             disabled={isDownloading}
           >
-            {isDownloading ? "Updating..." : "Update & Restart"}
+            {isDownloading
+              ? "Updating..."
+              : update.mode === "native"
+              ? "Update & Restart"
+              : "Open Release Page ↗"}
           </button>
         </div>
       </div>

@@ -165,19 +165,30 @@ pub fn delete_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri:
     if !path_buf.exists() || !path_buf.is_dir() {
         return Err("Vault path does not exist".to_string());
     }
+
+    // Safety: only delete directories that are confirmed Excalideck vaults
+    if !path_buf.join(".excalideck").is_dir() {
+        return Err("Refusing to delete directory: missing .excalideck marker".to_string());
+    }
+
+    let canonical = path_buf.canonicalize().map_err(|e| e.to_string())?;
+    if canonical.parent().is_none() {
+        return Err("Cannot delete root directory".to_string());
+    }
+
     {
         let mut state_guard = state.lock().unwrap();
         state_guard.ensure_config_dir(&app);
         if let Some(ref v) = state_guard.vault {
-            if v.path == path_buf {
+            if v.path == path_buf || v.path == canonical {
                 state_guard.vault = None;
                 state_guard.watcher_handle = None;
             }
         }
-        state_guard.config.recent_vaults.retain(|v| v.path != path);
+        state_guard.config.recent_vaults.retain(|v| v.path != path && v.path != canonical.to_string_lossy());
         state_guard.save_config();
     }
-    std::fs::remove_dir_all(&path_buf).map_err(|e| e.to_string())?;
+    std::fs::remove_dir_all(&canonical).map_err(|e| e.to_string())?;
     Ok(())
 }
 

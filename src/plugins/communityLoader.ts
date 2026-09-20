@@ -6,11 +6,11 @@ import { habitTrackerPlugin } from "./official/habit-tracker";
 
 export interface CommunityPluginEntry {
   manifest: PluginManifest;
-  module: ExcalideckPlugin;
+  module?: ExcalideckPlugin;
 }
 
 // Map of official downloadable plugins pre-bundled into the app binary
-const OFFICIAL_PLUGIN_MODULES: Record<string, ExcalideckPlugin> = {
+export const OFFICIAL_PLUGIN_MODULES: Record<string, ExcalideckPlugin> = {
   "excalideck.ghost-keys": ghostKeysPlugin,
   "excalideck.study-calendar": studyCalendarPlugin,
   "excalideck.habit-tracker": habitTrackerPlugin,
@@ -18,7 +18,8 @@ const OFFICIAL_PLUGIN_MODULES: Record<string, ExcalideckPlugin> = {
 
 
 /**
- * Discovers and loads community and installed official plugins from the vault's .excalideck/plugins/ directory.
+ * Discovers community and installed official plugins from the vault's .excalideck/plugins/ directory.
+ * NOTE: For safety, third-party JavaScript code is NOT evaluated during discovery.
  */
 export async function discoverCommunityPlugins(): Promise<CommunityPluginEntry[]> {
   const entries: CommunityPluginEntry[] = [];
@@ -35,31 +36,21 @@ export async function discoverCommunityPlugins(): Promise<CommunityPluginEntry[]
     try {
       const manifest = communityInfoToManifest(info);
 
-      // Validate the manifest before attempting to load
+      // Validate the manifest before attempting to register
       if (!validateManifest(manifest)) {
         console.warn(`[CommunityLoader] Invalid manifest for plugin "${info.id}", skipping`);
         continue;
       }
 
-      let pluginModule: ExcalideckPlugin | null = null;
-
-      // 1. If it's an official plugin with pre-compiled module, use the official implementation
+      // 1. If it's an official plugin with pre-compiled module, provide the official module
       if (OFFICIAL_PLUGIN_MODULES[info.id]) {
-        pluginModule = OFFICIAL_PLUGIN_MODULES[info.id];
+        entries.push({ manifest, module: OFFICIAL_PLUGIN_MODULES[info.id] });
       } else {
-        // 2. Otherwise, read plugin file from vault disk and evaluate
-        const code = await readPluginFile(info.id, manifest.main);
-        pluginModule = evaluatePluginCode(code, info.id);
+        // 2. Third-party community plugin: register manifest only; defer code evaluation until explicit activation
+        entries.push({ manifest });
       }
-
-      if (!pluginModule || typeof pluginModule.activate !== "function") {
-        console.warn(`[CommunityLoader] Plugin "${info.id}" has no valid activate() export, skipping`);
-        continue;
-      }
-
-      entries.push({ manifest, module: pluginModule });
     } catch (err) {
-      console.error(`[CommunityLoader] Failed to load plugin "${info.id}":`, err);
+      console.error(`[CommunityLoader] Failed to parse manifest for "${info.id}":`, err);
     }
   }
 
@@ -67,13 +58,30 @@ export async function discoverCommunityPlugins(): Promise<CommunityPluginEntry[]
 }
 
 /**
- * Safely evaluates plugin JavaScript code into an ExcalideckPlugin module.
+ * Loads and evaluates code for an untrusted community plugin on demand.
  */
-function evaluatePluginCode(code: string, pluginId: string): ExcalideckPlugin | null {
+export async function loadCommunityPluginCode(
+  pluginId: string,
+  mainFile: string
+): Promise<ExcalideckPlugin | null> {
+  const code = await readPluginFile(pluginId, mainFile);
+  return evaluatePluginCode(code, pluginId);
+}
+
+/**
+ * Evaluates plugin JavaScript code with shadowed IPC internals.
+ */
+export function evaluatePluginCode(code: string, pluginId: string): ExcalideckPlugin | null {
   try {
     const moduleObj = { exports: {} as any };
-    const runner = new Function("exports", "module", "require", code);
-    runner(moduleObj.exports, moduleObj, () => ({}));
+    const runner = new Function(
+      "exports",
+      "module",
+      "require",
+      "__TAURI_INTERNALS__",
+      code
+    );
+    runner(moduleObj.exports, moduleObj, () => ({}), undefined);
     return moduleObj.exports.default || moduleObj.exports;
   } catch (err) {
     console.error(`[CommunityLoader] Failed to evaluate code for plugin "${pluginId}":`, err);

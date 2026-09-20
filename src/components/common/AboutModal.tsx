@@ -168,14 +168,27 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               </div>
             )}
 
-            {/* Update Action Button */}
+            {/* Update Action Button & Direct Download Fallback */}
             {updateState?.available && !isDownloading && (
-              <button className="about-install-btn" onClick={onInstallUpdate}>
-                <IconSparkles size={14} />
-                <span>Update to v{updateState.version} & Restart</span>
-              </button>
+              <div className="about-install-actions">
+                <button className="about-install-btn" onClick={onInstallUpdate}>
+                  <IconSparkles size={14} />
+                  <span>Update to v{updateState.version} & Restart</span>
+                </button>
+                {updateState.downloadUrl && (
+                  <a
+                    href={updateState.downloadUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="about-manual-download-link"
+                  >
+                    Direct Download ({updateState.fileName || "installer"}) ↗
+                  </a>
+                )}
+              </div>
             )}
           </div>
+
 
           {/* Description & Useful Links */}
           <div className="about-description">

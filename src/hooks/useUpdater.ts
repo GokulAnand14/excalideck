@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { check, Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { getVersion } from "@tauri-apps/api/app";
-import { invoke } from "@tauri-apps/api/core";
 
 export interface UpdateState {
   available: boolean;
@@ -12,6 +11,7 @@ export interface UpdateState {
   date?: string;
   downloadUrl?: string;
   fileName?: string;
+  releaseUrl?: string;
   mode: "native" | "direct";
 }
 
@@ -182,6 +182,7 @@ export const useUpdater = () => {
             date: release.published_at,
             downloadUrl: matchedAsset?.url,
             fileName: matchedAsset?.name,
+            releaseUrl: release.html_url || `https://github.com/GokulAnand14/excalideck/releases/tag/v${remoteVer}`,
             mode: "direct",
           });
           setStatusMessage(null);
@@ -246,59 +247,15 @@ export const useUpdater = () => {
         return;
       }
 
-      // 2. Direct GitHub Asset Download & Auto-Launch
-      if (!updateState.downloadUrl) {
-        throw new Error("No installer download URL found for your operating system.");
-      }
-
-      console.log(`[Updater] Downloading installer from ${updateState.downloadUrl}...`);
-      const res = await fetch(updateState.downloadUrl);
-      if (!res.ok) throw new Error(`Download failed with HTTP ${res.status}`);
-
-      const contentLength = res.headers.get("content-length");
-      const total = contentLength ? parseInt(contentLength, 10) : 0;
-      setDownloadTotal(total);
-
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error("Could not read download stream");
-
-      const chunks: Uint8Array[] = [];
-      let received = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          chunks.push(value);
-          received += value.length;
-          setDownloadedBytes(received);
-          if (total > 0) {
-            setDownloadProgress(Math.min(Math.round((received / total) * 100), 99));
-          }
-        }
-      }
-
-      setDownloadProgress(100);
-
-      // Merge all binary chunks into a single buffer
-      const merged = new Uint8Array(received);
-      let offset = 0;
-      for (const chunk of chunks) {
-        merged.set(chunk, offset);
-        offset += chunk.length;
-      }
-
-      const fileName = updateState.fileName || `Excalideck-Setup-v${updateState.version}.exe`;
-      console.log(`[Updater] Saving and launching installer: ${fileName} (${received} bytes)...`);
-
-      // Invoke Rust backend to write file to %TEMP% and launch installer
-      await invoke("save_and_launch_installer", {
-        fileName,
-        data: Array.from(merged),
-      });
+      // 2. Direct Release fallback: open official release in system browser
+      const releasePage =
+        updateState.releaseUrl ||
+        `https://github.com/GokulAnand14/excalideck/releases/tag/v${updateState.version}`;
+      window.open(releasePage, "_blank", "noopener,noreferrer");
+      setIsDownloading(false);
     } catch (e: any) {
       console.error("[Updater] Installation error:", e);
-      setError(e?.message || "Failed to download and install update.");
+      setError(e?.message || "Failed to process update.");
       setIsDownloading(false);
     }
   }, [updateState]);

@@ -131,9 +131,9 @@ const App: React.FC = () => {
     if (vaultPath && vaultPath !== prevPath) {
       // Vault just opened
       pluginManager.discoverCommunityPlugins().then(() => {
-        pluginManager.activateAll();
+        pluginManager.activateBuiltins();
       }).catch((err) => {
-        console.error("[App] Failed to load community plugins:", err);
+        console.error("[App] Failed to discover plugins:", err);
       });
       pluginManager.getEventBus().emit("vault:open", vaultPath);
     } else if (!vaultPath && prevPath) {

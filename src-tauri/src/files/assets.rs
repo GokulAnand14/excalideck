@@ -49,6 +49,10 @@ pub fn extract_assets(vault_path: &Path, content: &str) -> Result<String, String
     
     if let Some(files) = json.get_mut("files").and_then(|f| f.as_object_mut()) {
         for (id, file_obj) in files.iter_mut() {
+            if crate::files::security::validate_asset_id(id).is_err() {
+                continue;
+            }
+
             let maybe_data_url = file_obj
                 .get("dataURL")
                 .and_then(|v| v.as_str())
@@ -66,6 +70,15 @@ pub fn extract_assets(vault_path: &Path, content: &str) -> Result<String, String
                         if let Ok(decoded) = BASE64.decode(base64_payload.trim()) {
                             let asset_name = format!("{}.{}", id, ext);
                             let asset_path = assets_dir.join(&asset_name);
+                            if let Ok(canonical_assets) = assets_dir.canonicalize() {
+                                if let Some(parent) = asset_path.parent() {
+                                    if let Ok(canonical_parent) = parent.canonicalize() {
+                                        if !canonical_parent.starts_with(&canonical_assets) {
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
                             if fs::write(&asset_path, decoded).is_ok() {
                                 let mime_str = get_mime_from_ext(ext).to_string();
                                 if let Some(map) = file_obj.as_object_mut() {
@@ -101,19 +114,33 @@ pub fn inject_assets(vault_path: &Path, content: &str) -> Result<String, String>
                 .map(|s| s.to_string());
 
             if let Some(asset_path_val) = maybe_asset_path {
-                let asset_path = if assets_dir.join(&asset_path_val).exists() {
-                    assets_dir.join(&asset_path_val)
-                } else {
-                    legacy_assets_dir.join(&asset_path_val)
+                let sanitized_ref = match crate::files::security::sanitize_asset_ref(&asset_path_val) {
+                    Ok(r) => r,
+                    Err(_) => continue,
                 };
 
-                if let Ok(data) = fs::read(&asset_path) {
-                    let ext = asset_path.extension().and_then(|e| e.to_str()).unwrap_or("png");
-                    let mime = get_mime_from_ext(ext);
-                    let data_url = format!("data:{};base64,{}", mime, BASE64.encode(data));
-                    if let Some(map) = file_obj.as_object_mut() {
-                        map.insert("dataURL".to_string(), Value::String(data_url));
-                        map.insert("mimeType".to_string(), Value::String(mime.to_string()));
+                let asset_path = if assets_dir.join(&sanitized_ref).exists() {
+                    assets_dir.join(&sanitized_ref)
+                } else {
+                    legacy_assets_dir.join(&sanitized_ref)
+                };
+
+                // Canonical boundary check to guarantee file is inside assets directory
+                if let Ok(canonical_file) = asset_path.canonicalize() {
+                    let in_primary = assets_dir.canonicalize().map(|p| canonical_file.starts_with(&p)).unwrap_or(false);
+                    let in_legacy = legacy_assets_dir.canonicalize().map(|p| canonical_file.starts_with(&p)).unwrap_or(false);
+                    if !in_primary && !in_legacy {
+                        continue;
+                    }
+
+                    if let Ok(data) = fs::read(&canonical_file) {
+                        let ext = canonical_file.extension().and_then(|e| e.to_str()).unwrap_or("png");
+                        let mime = get_mime_from_ext(ext);
+                        let data_url = format!("data:{};base64,{}", mime, BASE64.encode(data));
+                        if let Some(map) = file_obj.as_object_mut() {
+                            map.insert("dataURL".to_string(), Value::String(data_url));
+                            map.insert("mimeType".to_string(), Value::String(mime.to_string()));
+                        }
                     }
                 }
             }
