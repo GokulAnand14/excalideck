@@ -4,16 +4,11 @@ import { FileTreeNode } from "../../types/fileTree";
 import { DragGhost } from "./DragGhost";
 import { MoveModal } from "./MoveModal";
 import { useDialog } from "../../context/DialogContext";
-import { usePluginUI, PluginSlot } from "../../plugins";
 import { usePlatform } from "../../hooks/usePlatform";
 import {
   IconNewFile,
   IconNewFolder,
   IconSearch,
-  IconPlugin,
-  IconChevronRight,
-  IconChevronDown,
-  IconSparkles,
 } from "../common/Icons";
 import "./Sidebar.css";
 
@@ -28,10 +23,8 @@ interface SidebarProps {
   onRenameFile: (oldPath: string, newName: string) => void;
   onMoveFile: (src: string, destFolder: string) => void;
   onOpenVaultPicker?: () => void;
-  onOpenMarketplace?: () => void;
   onOpenAbout?: () => void;
   currentVersion?: string;
-  hasUpdateAvailable?: boolean;
   onCloseMobile?: () => void;
 }
 
@@ -46,20 +39,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRenameFile,
   onMoveFile,
   onOpenVaultPicker,
-  onOpenMarketplace,
   onOpenAbout,
   currentVersion,
-  hasUpdateAvailable,
   onCloseMobile,
 }) => {
   const { isDesktop, isMobile } = usePlatform();
   const { promptDialog } = useDialog();
-  const { sidebarPanels } = usePluginUI();
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
-  const [expandedPluginPanels, setExpandedPluginPanels] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState<'explorer' | 'plugins'>('explorer');
-
 
   // Move Modal state
   const [moveModalItem, setMoveModalItem] = useState<{
@@ -83,15 +70,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const handleMouseUp = () => {
       if (isResizingRef.current) {
         isResizingRef.current = false;
-        document.body.style.cursor = 'default';
-        document.body.style.userSelect = 'auto';
+        document.body.style.cursor = "default";
+        document.body.style.userSelect = "auto";
       }
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, []);
 
@@ -99,8 +86,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     isResizingRef.current = true;
     startXRef.current = e.clientX;
     startWidthRef.current = sidebarWidth;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
   };
 
   // --- Pointer-based Virtual Drag & Drop State ---
@@ -119,51 +106,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const dropTargetRef = useRef<string | null>(null);
   const sidebarContentRef = useRef<HTMLDivElement | null>(null);
 
-  // Toggle folder open/closed state
-  const handleToggleExpand = (folderPath: string) => {
-    setCollapsedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(folderPath)) {
-        next.delete(folderPath); // Expand
-      } else {
-        next.add(folderPath); // Collapse
-      }
-      return next;
-    });
-  };
-
-  const handleTogglePluginPanel = (panelId: string) => {
-    setExpandedPluginPanels((prev) => {
-      const next = new Set(prev);
-      if (next.has(panelId)) {
-        next.delete(panelId);
-      } else {
-        next.add(panelId);
-      }
-      return next;
-    });
-  };
-
-
-  // --- Pointer Drag Listeners ---
-  const handleItemPointerDown = (e: React.PointerEvent, node: FileTreeNode) => {
-    // Only primary mouse button and not on mobile touchscreens
-    if (e.button !== 0 || isMobile || e.pointerType === "touch") return;
-
-    // Don't drag if clicking buttons
-    const target = e.target as HTMLElement;
-    if (target.closest("button") || target.closest(".folder-hover-actions")) {
-      return;
-    }
-
+  const handleItemPointerDown = (
+    e: React.PointerEvent,
+    node: FileTreeNode
+  ) => {
+    if (e.button !== 0) return;
     dragStartPosRef.current = { x: e.clientX, y: e.clientY };
     pendingDragItemRef.current = {
       path: node.path,
       isFolder: node.nodeType === "directory",
       name: node.name,
     };
-    isDraggingRef.current = false;
-    dropTargetRef.current = null;
   };
 
   useEffect(() => {
@@ -191,11 +144,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           const targetType = itemRow.getAttribute("data-node-type");
 
           if (targetType === "directory") {
-            // Target is a folder
             dropTargetRef.current = targetPath;
             setDropTargetFolder(targetPath);
           } else {
-            // Target is a file -> target its parent folder
             const parentFolder = targetPath.includes("/")
               ? targetPath.substring(0, targetPath.lastIndexOf("/"))
               : "";
@@ -203,7 +154,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             setDropTargetFolder(parentFolder);
           }
         } else if (sidebarContentRef.current?.contains(elemUnder)) {
-          // Hovering empty space in sidebar -> vault root
           dropTargetRef.current = "";
           setDropTargetFolder("");
         } else {
@@ -219,14 +169,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const isSrcFolder = pendingDragItemRef.current.isFolder;
         const destFolder = dropTargetRef.current;
 
-        // Prevent moving into itself or own subfolder
         const isSelf = srcPath === destFolder;
         const isDescendant = isSrcFolder && destFolder.startsWith(srcPath + "/");
 
         if (!isSelf && !isDescendant) {
           onMoveFile(srcPath, destFolder);
 
-          // Auto-expand dest folder if collapsed
           if (destFolder && collapsedFolders.has(destFolder)) {
             setCollapsedFolders((prev) => {
               const next = new Set(prev);
@@ -237,7 +185,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }
       }
 
-      // Reset drag state
       dragStartPosRef.current = null;
       pendingDragItemRef.current = null;
       isDraggingRef.current = false;
@@ -248,21 +195,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
-
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", handlePointerUp);
     };
   }, [collapsedFolders, onMoveFile]);
 
+  const handleToggleExpand = (folderPath: string) => {
+    setCollapsedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderPath)) {
+        next.delete(folderPath);
+      } else {
+        next.add(folderPath);
+      }
+      return next;
+    });
+  };
+
   const handleNewFile = async () => {
     const name = await promptDialog({
-      title: "Create New Drawing",
-      subtitle: "Inside vault root",
-      placeholder: "Untitled",
-      defaultValue: "Untitled",
+      title: "New Drawing",
+      placeholder: "Drawing name",
       confirmText: "Create",
       icon: <IconNewFile size={16} />,
     });
@@ -273,11 +227,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const handleNewFolder = async () => {
     const name = await promptDialog({
-      title: "Create New Folder",
-      subtitle: "Inside vault root",
-      placeholder: "New Folder",
-      defaultValue: "New Folder",
-      confirmText: "Create Folder",
+      title: "New Folder",
+      placeholder: "Folder name",
+      confirmText: "Create",
       icon: <IconNewFolder size={16} />,
     });
     if (name) {
@@ -285,17 +237,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  // Count total drawings in tree
-  const countDrawings = (node: FileTreeNode | null): number => {
-    if (!node) return 0;
+  const countDrawings = (node: FileTreeNode): number => {
     if (node.nodeType === "file") return 1;
-    if (node.children) {
-      return node.children.reduce((acc, child) => acc + countDrawings(child), 0);
-    }
-    return 0;
+    if (!node.children) return 0;
+    return node.children.reduce((acc, child) => acc + countDrawings(child), 0);
   };
 
-  const totalDrawings = countDrawings(tree);
+  const totalDrawings = tree ? countDrawings(tree) : 0;
 
   const handleSelectFile = (path: string) => {
     onFileSelect(path);
@@ -314,233 +262,148 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
       <div className={`sidebar-layout ${isMobile ? "is-mobile" : ""}`}>
-      <div className="activity-bar">
-        <div className="activity-bar-top">
-          <button
-            className={`activity-btn ${activeTab === 'explorer' ? 'active' : ''}`}
-            onClick={() => setActiveTab('explorer')}
-            title="Explorer"
-          >
-            <IconNewFolder size={18} />
-          </button>
-          <button
-            className={`activity-btn ${activeTab === 'plugins' ? 'active' : ''}`}
-            onClick={() => setActiveTab('plugins')}
-            title="Plugins"
-          >
-            <IconPlugin size={18} />
-          </button>
-        </div>
-
-        {onOpenAbout && (
-          <div className="activity-bar-bottom">
-            <button
-              className={`activity-btn ${hasUpdateAvailable ? "has-update" : ""}`}
-              onClick={onOpenAbout}
-              title={`Excalideck v${currentVersion || "0.1.8"} • ${hasUpdateAvailable ? "Update Available!" : "Check for Updates"}`}
-              style={{ position: "relative" }}
-            >
-              <IconSparkles size={16} style={hasUpdateAvailable ? { color: "#f59e0b" } : undefined} />
-              {hasUpdateAvailable && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "3px",
-                    right: "3px",
-                    width: "6px",
-                    height: "6px",
-                    borderRadius: "50%",
-                    background: "#f59e0b",
-                    boxShadow: "0 0 6px #f59e0b",
-                  }}
-                />
-              )}
-            </button>
-          </div>
-        )}
-      </div>
-
-
-      <aside className="sidebar" style={{ width: isMobile ? undefined : sidebarWidth }}>
-        {activeTab === 'explorer' && (
-          <>
-            {/* Header */}
-            <div className="sidebar-header">
-              <div className="sidebar-vault-info">
-                <img src="/logo.png" className="sidebar-vault-logo" alt="Vault" />
-                <span className="sidebar-vault-name" title={vaultName || "Vault"}>
-                  {vaultName || "Vault"}
-                </span>
-              </div>
-
-              <div className="sidebar-actions">
-                <button
-                  className="sidebar-action-btn"
-                  onClick={handleNewFile}
-                  title="New Drawing (in root)"
-                >
-                  <IconNewFile size={15} />
-                </button>
-                <button
-                  className="sidebar-action-btn"
-                  onClick={handleNewFolder}
-                  title="New Folder (in root)"
-                >
-                  <IconNewFolder size={15} />
-                </button>
-                {isMobile && onCloseMobile && (
-                  <button
-                    className="sidebar-action-btn mobile-drawer-close-btn"
-                    onClick={onCloseMobile}
-                    title="Close Sidebar"
-                    aria-label="Close Sidebar"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Search Input */}
-            <div className="sidebar-search">
-              <IconSearch size={13} className="sidebar-search-icon" />
-              <input
-                type="text"
-                placeholder="Filter drawings..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="sidebar-search-input"
-              />
-              {searchQuery && (
-                <button
-                  className="sidebar-search-clear"
-                  onClick={() => setSearchQuery("")}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-
-            {/* File Tree & Root Drop Zone */}
+        <aside className="sidebar" style={{ width: isMobile ? undefined : sidebarWidth }}>
+          {/* Header */}
+          <div className="sidebar-header">
             <div
-              ref={sidebarContentRef}
-              className={`sidebar-content ${dropTargetFolder === "" ? "is-root-drop-target" : ""}`}
+              className={`sidebar-vault-info ${onOpenVaultPicker ? "clickable" : ""}`}
+              onClick={onOpenVaultPicker}
+              role={onOpenVaultPicker ? "button" : undefined}
+              tabIndex={onOpenVaultPicker ? 0 : undefined}
+              title={onOpenVaultPicker ? `Vault: ${vaultName || "Vault"} • Click to switch` : (vaultName || "Vault")}
+              onKeyDown={(e) => {
+                if (onOpenVaultPicker && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  onOpenVaultPicker();
+                }
+              }}
             >
-              {tree ? (
-                <FileTree
-                  node={tree}
-                  activeFile={activeFile}
-                  searchQuery={searchQuery}
-                  collapsedFolders={collapsedFolders}
-                  onToggleExpand={handleToggleExpand}
-                  onFileSelect={handleSelectFile}
-                  onCreateDrawing={onCreateDrawing}
-                  onCreateFolder={onCreateFolder}
-                  onDeleteFile={onDeleteFile}
-                  onRenameFile={onRenameFile}
-                  onOpenMoveModal={(path, isFolder) => setMoveModalItem({ path, isFolder })}
-                  draggedItem={draggedItem}
-                  dropTargetFolder={dropTargetFolder}
-                  onItemPointerDown={handleItemPointerDown}
-                />
-              ) : (
-                <div className="sidebar-empty">
-                  <p>No vault open</p>
-                  {onOpenVaultPicker && (
-                    <button className="sidebar-open-vault-btn" onClick={onOpenVaultPicker}>
-                      Open Vault
-                    </button>
-                  )}
-                </div>
+              <img src="/logo.png" className="sidebar-vault-logo" alt="Vault" />
+              <span className="sidebar-vault-name" title={vaultName || "Vault"}>
+                {vaultName || "Vault"}
+              </span>
+              {onOpenVaultPicker && <span className="sidebar-vault-caret">▾</span>}
+            </div>
+
+            <div className="sidebar-actions">
+              <button
+                className="sidebar-action-btn"
+                onClick={handleNewFile}
+                title="New Drawing (in root)"
+              >
+                <IconNewFile size={15} />
+              </button>
+              <button
+                className="sidebar-action-btn"
+                onClick={handleNewFolder}
+                title="New Folder (in root)"
+              >
+                <IconNewFolder size={15} />
+              </button>
+              {isMobile && onCloseMobile && (
+                <button
+                  className="sidebar-action-btn mobile-drawer-close-btn"
+                  onClick={onCloseMobile}
+                  title="Close Sidebar"
+                  aria-label="Close Sidebar"
+                >
+                  ✕
+                </button>
               )}
             </div>
+          </div>
 
-            {/* Footer */}
-            <div className="sidebar-footer">
-              <span className="sidebar-stats">
-                {totalDrawings} {totalDrawings === 1 ? "drawing" : "drawings"}
-              </span>
-              <div style={{ display: "flex", gap: "4px" }}>
-                {onOpenVaultPicker && (
-                  <button
-                    className="sidebar-switch-btn"
-                    onClick={onOpenVaultPicker}
-                    title="Switch or Open Another Vault"
-                  >
-                    Switch Vault
-                  </button>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeTab === 'plugins' && (
-          <div className="plugins-view">
-            <div className="plugins-view-header">Plugins</div>
-            {onOpenMarketplace && (
-              <button className="plugins-manage-btn" onClick={onOpenMarketplace}>
-                <IconPlugin size={14} /> Manage Plugins
+          {/* Search Input */}
+          <div className="sidebar-search">
+            <IconSearch size={13} className="sidebar-search-icon" />
+            <input
+              type="text"
+              placeholder="Filter drawings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="sidebar-search-input"
+            />
+            {searchQuery && (
+              <button
+                className="sidebar-search-clear"
+                onClick={() => setSearchQuery("")}
+              >
+                ×
               </button>
             )}
-            {sidebarPanels.length > 0 && (
-              <div className="sidebar-plugin-panels">
-                {sidebarPanels.map((panel) => {
-                  const isExpanded = expandedPluginPanels.has(panel.id);
-                  return (
-                    <div
-                      key={panel.id}
-                      className={`sidebar-plugin-panel ${!isExpanded ? "is-collapsed" : ""}`}
-                    >
-                      <button
-                        type="button"
-                        className="sidebar-plugin-panel-header"
-                        onClick={() => handleTogglePluginPanel(panel.id)}
-                        aria-expanded={isExpanded}
-                        title={isExpanded ? `Collapse ${panel.title}` : `Expand ${panel.title}`}
-                      >
-                        <span className="sidebar-plugin-panel-title">{panel.title}</span>
-                        <span className="sidebar-plugin-panel-chevron">
-                          {isExpanded ? <IconChevronDown size={12} /> : <IconChevronRight size={12} />}
-                        </span>
-                      </button>
-                      {isExpanded && (
-                        <div className="sidebar-plugin-panel-content">
-                          <PluginSlot render={panel.render} />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+          </div>
 
+          {/* File Tree & Root Drop Zone */}
+          <div
+            ref={sidebarContentRef}
+            className={`sidebar-content ${dropTargetFolder === "" ? "is-root-drop-target" : ""}`}
+          >
+            {tree ? (
+              <FileTree
+                node={tree}
+                activeFile={activeFile}
+                searchQuery={searchQuery}
+                collapsedFolders={collapsedFolders}
+                onToggleExpand={handleToggleExpand}
+                onFileSelect={handleSelectFile}
+                onCreateDrawing={onCreateDrawing}
+                onCreateFolder={onCreateFolder}
+                onDeleteFile={onDeleteFile}
+                onRenameFile={onRenameFile}
+                onOpenMoveModal={(path, isFolder) => setMoveModalItem({ path, isFolder })}
+                draggedItem={draggedItem}
+                dropTargetFolder={dropTargetFolder}
+                onItemPointerDown={handleItemPointerDown}
+              />
+            ) : (
+              <div className="sidebar-empty">
+                <p>No vault open</p>
+                {onOpenVaultPicker && (
+                  <button className="sidebar-open-vault-btn" onClick={onOpenVaultPicker}>
+                    Open Vault
+                  </button>
+                )}
               </div>
             )}
           </div>
-        )}
 
-        {/* Floating Drag Ghost Badge */}
-        {draggedItem && (
-          <DragGhost
-            name={draggedItem.name}
-            isFolder={draggedItem.isFolder}
-            x={ghostPos.x}
-            y={ghostPos.y}
-          />
-        )}
+          {/* Footer */}
+          <div className="sidebar-footer">
+            <span className="sidebar-stats">
+              {totalDrawings} {totalDrawings === 1 ? "drawing" : "drawings"}
+            </span>
+            <span
+              className="sidebar-version"
+              onClick={onOpenAbout}
+              title={currentVersion ? `Excalideck v${currentVersion}` : "Excalideck"}
+            >
+              v{currentVersion || "0.2.1"}
+            </span>
+          </div>
 
-        {/* Move to Folder Modal */}
-        {moveModalItem && (
-          <MoveModal
-            itemPath={moveModalItem.path}
-            isFolder={moveModalItem.isFolder}
-            tree={tree}
-            onMove={onMoveFile}
-            onClose={() => setMoveModalItem(null)}
-          />
-        )}
-      </aside>
-      {isDesktop && <div className="sidebar-resizer" onMouseDown={handleResizeStart} />}
-    </div>
-  </>
-);
+          {/* Floating Drag Ghost Badge */}
+          {draggedItem && (
+            <DragGhost
+              name={draggedItem.name}
+              isFolder={draggedItem.isFolder}
+              x={ghostPos.x}
+              y={ghostPos.y}
+            />
+          )}
+
+          {/* Move to Folder Modal */}
+          {moveModalItem && (
+            <MoveModal
+              itemPath={moveModalItem.path}
+              isFolder={moveModalItem.isFolder}
+              tree={tree}
+              onMove={onMoveFile}
+              onClose={() => setMoveModalItem(null)}
+            />
+          )}
+        </aside>
+        {isDesktop && <div className="sidebar-resizer" onMouseDown={handleResizeStart} />}
+      </div>
+    </>
+  );
 };

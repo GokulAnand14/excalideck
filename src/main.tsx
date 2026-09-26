@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { DialogProvider } from "./context/DialogContext";
-import { PluginProvider } from "./plugins/PluginProvider";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import "./index.css";
 // Set asset path for Excalidraw fonts and dynamic resources
@@ -14,9 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <DialogProvider>
-        <PluginProvider>
-          <App />
-        </PluginProvider>
+        <App />
       </DialogProvider>
     </ErrorBoundary>
   </React.StrictMode>

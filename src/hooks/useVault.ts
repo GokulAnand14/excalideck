@@ -40,9 +40,8 @@ export const useVault = () => {
         const { recent, appList } = await fetchVaults();
         if (!mounted) return;
 
-        // Auto-open on mobile devices so user is immediately in drawing mode
-        const platform = await getPlatformInfo().catch(() => null);
-        if (platform?.isMobile && mounted) {
+        // Auto-open previously closed vault on startup across all platforms
+        if (mounted) {
           if (recent.length > 0) {
             try {
               const vault = await openVaultApi(recent[0].path);
@@ -71,7 +70,7 @@ export const useVault = () => {
               if (mounted) setActiveVault(vault);
             }
           } else {
-            // Fresh mobile install: auto-initialize Main Vault
+            // Fresh install: auto-initialize default vault
             const vault = await initDefaultVaultApi();
             if (mounted) setActiveVault(vault);
           }

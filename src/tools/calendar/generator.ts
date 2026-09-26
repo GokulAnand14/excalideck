@@ -3,12 +3,17 @@ export interface CalendarOptions {
   month: number;
   centerX: number;
   centerY: number;
+  theme?: "light" | "dark";
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-const PALETTE = {
+const LIGHT_PALETTE = {
   border: "#cbd5e1",
   bg: "#ffffff",
   text: "#0f172a",
@@ -17,34 +22,91 @@ const PALETTE = {
   dimText: "#94a3b8",
 };
 
+const DARK_PALETTE = {
+  border: "#334155",
+  bg: "transparent",
+  text: "#ffffff",
+  dimBorder: "#1e293b",
+  dimBg: "transparent",
+  dimText: "#64748b",
+};
+
 const baseEl = (id: string, type: string, x: number, y: number, w: number, h: number, gId: string, opacity = 100) => ({
-  id, type, x: Math.round(x), y: Math.round(y), width: Math.round(w), height: Math.round(h),
-  angle: 0, strokeColor: "#ffffff", backgroundColor: "transparent", fillStyle: "solid",
-  strokeWidth: 1.5, strokeStyle: "solid", roughness: 1, opacity, groupIds: [gId],
-  frameId: null, roundness: null as { type: number } | null, seed: Math.floor(Math.random() * 100000),
-  version: 1, versionNonce: Math.floor(Math.random() * 100000), isDeleted: false,
-  boundElements: null, updated: Date.now(), link: null, locked: false,
+  id,
+  type,
+  x: Math.round(x),
+  y: Math.round(y),
+  width: Math.round(w),
+  height: Math.round(h),
+  angle: 0,
+  strokeColor: "#ffffff",
+  backgroundColor: "transparent",
+  fillStyle: "solid",
+  strokeWidth: 1.5,
+  strokeStyle: "solid",
+  roughness: 1,
+  opacity,
+  groupIds: [gId],
+  frameId: null,
+  roundness: null as { type: number } | null,
+  seed: Math.floor(Math.random() * 100000),
+  version: 1,
+  versionNonce: Math.floor(Math.random() * 100000),
+  isDeleted: false,
+  boundElements: null,
+  updated: Date.now(),
+  link: null,
+  locked: false,
 });
 
 const makeRect = (
-  x: number, y: number, w: number, h: number, stroke: string, bg: string, gId: string, opacity = 100,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  stroke: string,
+  bg: string,
+  gId: string,
+  opacity = 100
 ) => ({
   ...baseEl(`rect_${Math.random().toString(36).slice(2, 9)}`, "rectangle", x, y, w, h, gId, opacity),
-  strokeColor: stroke, backgroundColor: bg, roundness: null,
+  strokeColor: stroke,
+  backgroundColor: bg,
+  roundness: null,
 });
 
 const makeText = (
-  x: number, y: number, w: number, h: number, text: string, size: number,
-  color: string, align: "left" | "center", gId: string, opacity = 100,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  text: string,
+  size: number,
+  color: string,
+  align: "left" | "center",
+  gId: string,
+  opacity = 100
 ) => ({
   ...baseEl(`text_${Math.random().toString(36).slice(2, 9)}`, "text", x, y, w, h, gId, opacity),
-  text, fontSize: size, fontFamily: 1, textAlign: align,
+  text,
+  fontSize: size,
+  fontFamily: 1,
+  textAlign: align,
   verticalAlign: align === "center" ? "middle" : "top",
-  strokeColor: color, originalText: text, lineHeight: 1.25, baseline: Math.round(size * 0.9),
+  strokeColor: color,
+  originalText: text,
+  lineHeight: 1.25,
+  baseline: Math.round(size * 0.9),
 });
 
-export function generateCalendar({ year, month, centerX, centerY }: CalendarOptions): any[] {
-  const pal = PALETTE;
+export function generateCalendar({
+  year,
+  month,
+  centerX,
+  centerY,
+  theme = "dark",
+}: CalendarOptions): any[] {
+  const pal = theme === "light" ? LIGHT_PALETTE : DARK_PALETTE;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevDaysInMonth = new Date(year, month, 0).getDate();
   const startDay = (new Date(year, month, 1).getDay() + 6) % 7;

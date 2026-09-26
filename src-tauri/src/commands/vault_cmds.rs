@@ -53,7 +53,9 @@ pub fn open_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri::A
         return Err("Path is not a valid directory".to_string());
     }
     
-    let vault = Vault::new(path_buf.clone());
+    let canonical = path_buf.canonicalize().unwrap_or_else(|_| path_buf.clone());
+    let clean_path = crate::files::security::strip_verbatim_prefix(&canonical);
+    let vault = Vault::new(clean_path.clone());
     let info = vault.get_info();
     
     let mut state_guard = state.lock().unwrap();
@@ -62,7 +64,7 @@ pub fn open_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri::A
     state_guard.watcher_handle = None;
     state_guard.vault = Some(vault);
     
-    if let Ok(watcher) = start_watcher(&path_buf, app) {
+    if let Ok(watcher) = start_watcher(&clean_path, app) {
         state_guard.watcher_handle = Some(watcher);
     }
     

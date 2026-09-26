@@ -1,8 +1,12 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Excalidraw, MainMenu, WelcomeScreen } from "@excalidraw/excalidraw";
 import { useDialog } from "../../context/DialogContext";
 import { IconNewFile } from "../common/Icons";
+import { CanvasToolsDock } from "../../tools/CanvasToolsDock";
+import { CalendarModal } from "../../tools/calendar/CalendarModal";
+import { generateCalendar } from "../../tools/calendar/generator";
 import "@excalidraw/excalidraw/index.css";
+import "../../tools/tools.css";
 import "./Canvas.css";
 
 interface InitialData {
@@ -30,6 +34,10 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
 }) => {
   const { promptDialog } = useDialog();
   const excalidrawAPIRef = useRef<any>(null);
+  const prevThemeRef = useRef(theme);
+
+  // Calendar Tool State
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const handleQuickCreate = async () => {
     if (onCreateDrawing) {
@@ -46,28 +54,139 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
     }
   };
 
-  const handleAPIMount = (api: any) => {
-    excalidrawAPIRef.current = api;
-    if (initialData?.files) {
-      const fileValues = Object.values(initialData.files).filter(Boolean) as any[];
-      if (fileValues.length > 0) {
-        api.addFiles(fileValues);
+  const handleAPIMount = useCallback(
+    (api: any) => {
+      excalidrawAPIRef.current = api;
+      if (initialData?.files) {
+        const fileValues = Object.values(initialData.files).filter(Boolean) as any[];
+        if (fileValues.length > 0) {
+          api.addFiles(fileValues);
+        }
+      }
+      if (onAPIMount) {
+        onAPIMount(api);
+      }
+    },
+    [onAPIMount, initialData?.files]
+  );
+
+  // Sync theme changes to Excalidraw instance ONLY when theme actually toggles
+  useEffect(() => {
+    if (prevThemeRef.current !== theme) {
+      prevThemeRef.current = theme;
+      if (excalidrawAPIRef.current) {
+        excalidrawAPIRef.current.updateScene({
+          appState: { theme },
+          commitToHistory: false,
+        });
       }
     }
-    if (onAPIMount) {
-      onAPIMount(api);
-    }
+  }, [theme]);
+
+  const getViewportCenter = useCallback(() => {
+    const api = excalidrawAPIRef.current;
+    const appState = api?.getAppState?.() || {};
+    const zoom = appState.zoom?.value ?? appState.zoom ?? 1;
+    const scrollX = appState.scrollX ?? 0;
+    const scrollY = appState.scrollY ?? 0;
+    const width = window.innerWidth || 1200;
+    const height = window.innerHeight || 800;
+    return {
+      x: Math.round(-scrollX + width / 2 / zoom),
+      y: Math.round(-scrollY + height / 2 / zoom),
+    };
+  }, []);
+
+  const handleInternalChange = useCallback(
+    (elements: readonly any[], appState: any, files: any) => {
+      onChange(elements, appState, files);
+    },
+    [onChange]
+  );
+
+  // Insert Calendar onto Board
+  const handleInsertCalendar = (year: number, month: number) => {
+    const api = excalidrawAPIRef.current;
+    if (!api) return;
+
+    const { x, y } = getViewportCenter();
+    const appState = api.getAppState?.() || {};
+
+    // Auto-detect canvas theme accurately
+    const canvasBg = appState.viewBackgroundColor || "";
+    const isDarkCanvas =
+      appState.theme === "dark" ||
+      theme === "dark" ||
+      canvasBg === "#121212" ||
+      canvasBg === "#1e1e1e" ||
+      canvasBg === "#18181b" ||
+      canvasBg === "#000000" ||
+      (canvasBg.startsWith("#") && parseInt(canvasBg.replace("#", ""), 16) < 0x888888);
+
+    const effectiveTheme: "light" | "dark" = isDarkCanvas ? "dark" : "light";
+
+    const elements = generateCalendar({
+      year,
+      month,
+      centerX: x,
+      centerY: y,
+      theme: effectiveTheme,
+    });
+
+    const current = Array.from(api.getSceneElements?.() || []);
+    const selectedElementIds: Record<string, boolean> = {};
+    elements.forEach((el) => {
+      selectedElementIds[el.id] = true;
+    });
+
+    api.updateScene({
+      elements: [...current, ...elements],
+      appState: { ...api.getAppState(), selectedElementIds },
+      commitToHistory: true,
+    });
   };
 
-  // Sync theme changes to Excalidraw instance
-  useEffect(() => {
-    if (excalidrawAPIRef.current) {
-      excalidrawAPIRef.current.updateScene({
-        appState: { theme },
-        commitToHistory: false,
-      });
-    }
-  }, [theme]);
+  const memoizedInitialData = useMemo(() => {
+    if (!initialData) return undefined;
+    return {
+      elements: initialData.elements,
+      appState: {
+        ...initialData.appState,
+        theme,
+        zoom: initialData.appState?.zoom?.value
+          ? initialData.appState.zoom
+          : { value: 1 },
+      },
+      files: initialData.files,
+      scrollToContent: Boolean(
+        initialData.elements &&
+          initialData.elements.length > 0 &&
+          initialData.appState?.scrollX === undefined
+      ),
+    };
+  }, [fileName]);
+
+  const excalidrawChildren = useMemo(
+    () => (
+      <>
+        <MainMenu>
+          <MainMenu.DefaultItems.SaveAsImage />
+          <MainMenu.DefaultItems.Export />
+          <MainMenu.DefaultItems.ClearCanvas />
+          <MainMenu.DefaultItems.ToggleTheme />
+          <MainMenu.DefaultItems.ChangeCanvasBackground />
+        </MainMenu>
+        <WelcomeScreen>
+          <WelcomeScreen.Center>
+            <WelcomeScreen.Center.Heading>
+              Start sketching!
+            </WelcomeScreen.Center.Heading>
+          </WelcomeScreen.Center>
+        </WelcomeScreen>
+      </>
+    ),
+    []
+  );
 
   if (!fileName) {
     return (
@@ -104,47 +223,28 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
   return (
     <div className="canvas-wrapper-root">
       <div className="canvas-container">
+        {/* Sleek Floating Canvas Tools Dock */}
+        <CanvasToolsDock
+          onOpenCalendar={() => setIsCalendarOpen(true)}
+        />
+
         <Excalidraw
+          key={fileName || "canvas"}
           excalidrawAPI={handleAPIMount}
-          initialData={
-            initialData
-              ? {
-                  elements: initialData.elements,
-                  appState: {
-                    ...initialData.appState,
-                    theme,
-                    zoom: initialData.appState?.zoom?.value
-                      ? initialData.appState.zoom
-                      : { value: 1 },
-                  },
-                  files: initialData.files,
-                  scrollToContent: Boolean(
-                    initialData.elements &&
-                      initialData.elements.length > 0 &&
-                      initialData.appState?.scrollX === undefined
-                  ),
-                }
-              : undefined
-          }
+          initialData={memoizedInitialData}
           theme={theme}
-          onChange={onChange}
+          onChange={handleInternalChange}
         >
-          <MainMenu>
-            <MainMenu.DefaultItems.SaveAsImage />
-            <MainMenu.DefaultItems.Export />
-            <MainMenu.DefaultItems.ClearCanvas />
-            <MainMenu.DefaultItems.ToggleTheme />
-            <MainMenu.DefaultItems.ChangeCanvasBackground />
-          </MainMenu>
-          <WelcomeScreen>
-            <WelcomeScreen.Center>
-              <WelcomeScreen.Center.Heading>
-                Start sketching!
-              </WelcomeScreen.Center.Heading>
-            </WelcomeScreen.Center>
-          </WelcomeScreen>
+          {excalidrawChildren}
         </Excalidraw>
       </div>
+
+      {/* Calendar Picker Popover */}
+      <CalendarModal
+        isOpen={isCalendarOpen}
+        onClose={() => setIsCalendarOpen(false)}
+        onInsert={handleInsertCalendar}
+      />
     </div>
   );
 };

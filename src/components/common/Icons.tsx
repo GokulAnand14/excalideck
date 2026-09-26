@@ -157,11 +157,7 @@ export const IconAlertTriangle: React.FC<{ size?: number; className?: string; st
   </svg>
 );
 
-export const IconPlugin: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({ size = 16, className = "", style }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
-    <path d="M19.439 7.85c0-1.57.802-2.54 1.561-3.3a.75.75 0 0 0 0-1.1c-.76-.76-1.73-1.561-3.3-1.561-1.57 0-2.54.802-3.3 1.561a.75.75 0 0 1-1.1 0C12.54 2.69 11.57 1.89 10 1.89c-1.57 0-2.54.8-3.3 1.56-.76.76-1.561 1.73-1.561 3.3 0 1.57-.802 2.54-1.561 3.3a.75.75 0 0 0 0 1.1c.76.76 1.73 1.561 3.3 1.561.28 0 .54-.03.78-.08l.02.02v5.5a2.5 2.5 0 0 0 2.5 2.5h5.5l.02.02c-.05.24-.08.5-.08.78 0 1.57.802 2.54 1.561 3.3a.75.75 0 0 0 1.1 0c.76-.76 1.561-1.73 1.561-3.3 0-1.57.802-2.54 1.561-3.3a.75.75 0 0 0 0-1.1c-.76-.76-1.73-1.561-3.3-1.561a2.6 2.6 0 0 1-.78.08l-.02-.02V9.8a2.5 2.5 0 0 0-2.5-2.5h-5.5" />
-  </svg>
-);
+
 
 export const IconCheck: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({ size = 16, className = "", style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
@@ -280,7 +276,3 @@ export const IconGripVertical: React.FC<{ size?: number; className?: string; sty
     <circle cx="15" cy="19" r="1" />
   </svg>
 );
-
-
-
-

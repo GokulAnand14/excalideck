@@ -5,7 +5,7 @@ use crate::state::AppState;
 use serde::{Deserialize, Serialize};
 use crate::files::io::{read_file, write_file_atomic};
 use crate::files::assets::{extract_assets, inject_assets};
-use crate::files::security::resolve_vault_path;
+use crate::files::security::{resolve_vault_path, relative_to_vault, strip_verbatim_prefix};
 use std::fs;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -29,11 +29,7 @@ pub fn read_drawing(path: String, state: State<'_, Mutex<AppState>>) -> Result<D
     let last_modified = metadata.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH)
         .duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
 
-    let rel_path = full_path.strip_prefix(&vault.path)
-        .map_err(|e| e.to_string())?
-        .to_string_lossy()
-        .to_string()
-        .replace('\\', "/");
+    let rel_path = relative_to_vault(&vault.path, &full_path)?;
 
     Ok(DrawingData {
         path: rel_path,
@@ -88,12 +84,7 @@ pub fn create_drawing(name: String, folder: Option<String>, state: State<'_, Mut
     let initial_content = r#"{"type":"excalidraw","version":2,"source":"excalideck","elements":[],"appState":{"zoom":{"value":1},"scrollX":0,"scrollY":0},"files":{}}"#;
     write_file_atomic(&full_path, initial_content)?;
     
-    let rel_path = full_path.strip_prefix(&vault.path)
-        .map_err(|e| e.to_string())?
-        .to_string_lossy()
-        .to_string()
-        .replace('\\', "/");
-
+    let rel_path = relative_to_vault(&vault.path, &full_path)?;
     Ok(rel_path)
 }
 
@@ -103,7 +94,9 @@ pub fn delete_file(path: String, state: State<'_, Mutex<AppState>>) -> Result<()
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     
     let full_path = resolve_vault_path(&vault.path, &path)?;
-    if full_path == vault.path {
+    let clean_full = strip_verbatim_prefix(&full_path);
+    let clean_vault = strip_verbatim_prefix(&vault.path);
+    if clean_full == clean_vault {
         return Err("Cannot delete root vault directory via delete_file".to_string());
     }
 
@@ -126,7 +119,9 @@ pub fn rename_file(oldPath: String, newName: String, state: State<'_, Mutex<AppS
     }
 
     let old_full = resolve_vault_path(&vault.path, &oldPath)?;
-    if old_full == vault.path {
+    let clean_old = strip_verbatim_prefix(&old_full);
+    let clean_vault = strip_verbatim_prefix(&vault.path);
+    if clean_old == clean_vault {
         return Err("Cannot rename root vault directory".to_string());
     }
 
@@ -141,8 +136,8 @@ pub fn rename_file(oldPath: String, newName: String, state: State<'_, Mutex<AppS
 
     fs::rename(&old_full, &new_full).map_err(|e| e.to_string())?;
     
-    let rel_path = new_full.strip_prefix(&vault.path).map_err(|e| e.to_string())?;
-    Ok(rel_path.to_string_lossy().to_string().replace('\\', "/"))
+    let rel_path = relative_to_vault(&vault.path, &new_full)?;
+    Ok(rel_path)
 }
 
 #[tauri::command]
@@ -155,7 +150,9 @@ pub fn move_file(src: String, destFolder: String, state: State<'_, Mutex<AppStat
     if !src_full.exists() {
         return Err(format!("Source file does not exist: {}", src));
     }
-    if src_full == vault.path {
+    let clean_src = strip_verbatim_prefix(&src_full);
+    let clean_vault = strip_verbatim_prefix(&vault.path);
+    if clean_src == clean_vault {
         return Err("Cannot move root vault directory".to_string());
     }
 
@@ -172,9 +169,9 @@ pub fn move_file(src: String, destFolder: String, state: State<'_, Mutex<AppStat
 
     let dest_full = dest_dir.join(&file_name);
 
-    if src_full == dest_full {
-        let rel_path = dest_full.strip_prefix(&vault.path).map_err(|e| e.to_string())?;
-        return Ok(rel_path.to_string_lossy().to_string().replace('\\', "/"));
+    if clean_src == strip_verbatim_prefix(&dest_full) {
+        let rel_path = relative_to_vault(&vault.path, &dest_full)?;
+        return Ok(rel_path);
     }
 
     if src_full.is_dir() && dest_full.starts_with(&src_full) {
@@ -183,6 +180,6 @@ pub fn move_file(src: String, destFolder: String, state: State<'_, Mutex<AppStat
 
     fs::rename(&src_full, &dest_full).map_err(|e| format!("Failed to move file: {}", e))?;
     
-    let rel_path = dest_full.strip_prefix(&vault.path).map_err(|e| e.to_string())?;
-    Ok(rel_path.to_string_lossy().to_string().replace('\\', "/"))
+    let rel_path = relative_to_vault(&vault.path, &dest_full)?;
+    Ok(rel_path)
 }

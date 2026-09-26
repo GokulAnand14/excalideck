@@ -80,7 +80,7 @@ export const useExcalidrawBridge = () => {
           scrollY: typeof appState.scrollY === "number" ? appState.scrollY : 0,
         };
 
-        // 3. Update scene in-place if Excalidraw API is already mounted
+        // 3. Update scene in-place if Excalidraw API is already mounted, else set initialData
         if (excalidrawAPIRef.current) {
           // CRITICAL: Feed binary files to Excalidraw's binary file cache first!
           const fileValues = Object.values(files).filter(Boolean) as any[];
@@ -108,7 +108,7 @@ export const useExcalidrawBridge = () => {
           setInitialData({ elements, appState: cleanAppState, files });
         }
       } catch (e) {
-        console.error("Failed to load file", e);
+        console.error(`[useExcalidrawBridge] Failed to load drawing "${path}":`, e);
         cancel();
       } finally {
         isSwitchingRef.current = false;

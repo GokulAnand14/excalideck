@@ -1,0 +1,191 @@
+/* Floating Canvas Tools Dock */
+.canvas-tools-dock {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  background-color: var(--bg-card, #18181b);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px);
+  user-select: none;
+}
+
+.canvas-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-secondary, #a1a1aa);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.canvas-tool-btn:hover {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #f4f4f5);
+  border-color: var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.canvas-tool-btn.active {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary, #ffffff);
+}
+
+/* Calendar Popover */
+.calendar-popover-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 60px 24px 0 0;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
+}
+
+.calendar-popover {
+  width: 290px;
+  background: var(--bg-card, #18181b);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-md, 10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.calendar-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-popover-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #f4f4f5);
+}
+
+.calendar-popover-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #71717a);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.calendar-popover-close:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #ffffff);
+}
+
+.calendar-popover-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendar-nav-btn {
+  width: 28px;
+  height: 30px;
+  background: var(--hover-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  color: var(--text-primary, #f4f4f5);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-nav-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.12));
+}
+
+.calendar-select {
+  flex: 1;
+  height: 30px;
+  background: var(--hover-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  color: var(--text-primary, #f4f4f5);
+  font-size: 12px;
+  padding: 0 8px;
+  outline: none;
+}
+
+.calendar-select option {
+  background: #18181b;
+  color: #f4f4f5;
+}
+
+.calendar-year-input {
+  width: 62px;
+  height: 30px;
+  background: var(--hover-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  color: var(--text-primary, #f4f4f5);
+  font-size: 12px;
+  text-align: center;
+  outline: none;
+}
+
+.calendar-popover-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.calendar-today-btn {
+  padding: 0 12px;
+  height: 32px;
+  background: var(--hover-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  color: var(--text-primary, #f4f4f5);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.calendar-today-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.calendar-submit-btn {
+  flex: 1;
+  height: 32px;
+  background: var(--accent-color, #6366f1);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+}
+
+.calendar-submit-btn:hover {
+  opacity: 0.9;
+}
