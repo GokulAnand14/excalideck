@@ -14,21 +14,21 @@ const MONTHS = [
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const LIGHT_PALETTE = {
-  border: "#cbd5e1",
+  border: "#94a3b8",
   bg: "#ffffff",
   text: "#0f172a",
-  dimBorder: "#e2e8f0",
+  dimBorder: "#cbd5e1",
   dimBg: "#f8fafc",
-  dimText: "#94a3b8",
+  dimText: "#64748b",
 };
 
 const DARK_PALETTE = {
-  border: "#475569",
+  border: "#64748b",
   bg: "transparent",
   text: "#ffffff",
   dimBorder: "#334155",
   dimBg: "transparent",
-  dimText: "#94a3b8",
+  dimText: "#cbd5e1",
 };
 
 const baseEl = (id: string, type: string, x: number, y: number, w: number, h: number, gId: string, opacity = 100) => ({
@@ -150,7 +150,7 @@ export function generateCalendar({
     if (idx < startDay) {
       const prevDay = prevDaysInMonth - (startDay - 1 - idx);
       elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimBorder, pal.dimBg, gId, 60));
-      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${prevDay}`, 13, pal.dimText, "left", gId, 75));
+      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${prevDay}`, 13, pal.dimText, "left", gId, 85));
     } else if (idx < startDay + daysInMonth) {
       const dayNum = idx - startDay + 1;
       elements.push(makeRect(cellX, cellY, cellW, cellH, pal.border, pal.bg, gId));
@@ -158,7 +158,7 @@ export function generateCalendar({
     } else {
       const nextDay = idx - (startDay + daysInMonth) + 1;
       elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimBorder, pal.dimBg, gId, 60));
-      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${nextDay}`, 13, pal.dimText, "left", gId, 75));
+      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${nextDay}`, 13, pal.dimText, "left", gId, 85));
     }
   }
 

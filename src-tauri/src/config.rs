@@ -20,7 +20,7 @@ pub struct AppConfig {
 }
 
 fn default_theme() -> String {
-    "light".to_string()
+    "dark".to_string()
 }
 
 impl Default for AppConfig {

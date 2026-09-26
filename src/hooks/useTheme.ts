@@ -3,10 +3,13 @@ import { getAppConfig, setAppConfig } from "../lib/tauri";
 
 const getInitialTheme = (): "light" | "dark" => {
   if (typeof window !== "undefined") {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark" || saved === "light") return saved;
+    const userChosen = localStorage.getItem("theme_user_chosen");
+    if (userChosen === "true") {
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") return saved;
+    }
   }
-  return "dark"; // Always default to dark mode even if system is in light mode
+  return "dark"; // Always default to dark mode
 };
 
 export const useTheme = () => {
@@ -18,7 +21,8 @@ export const useTheme = () => {
     localStorage.setItem("theme", initial);
 
     getAppConfig().then(config => {
-      if (config.theme === "light") {
+      const userChosen = localStorage.getItem("theme_user_chosen");
+      if (userChosen === "true" && config.theme === "light") {
         setTheme("light");
         document.documentElement.setAttribute("data-theme", "light");
         localStorage.setItem("theme", "light");
@@ -26,9 +30,14 @@ export const useTheme = () => {
         setTheme("dark");
         document.documentElement.setAttribute("data-theme", "dark");
         localStorage.setItem("theme", "dark");
+        if (config.theme !== "dark") {
+          setAppConfig({ ...config, theme: "dark" }).catch(() => {});
+        }
       }
     }).catch(() => {
-      // Keep dark theme
+      setTheme("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
     });
   }, []);
 
@@ -37,6 +46,7 @@ export const useTheme = () => {
     setTheme(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     localStorage.setItem("theme", newTheme);
+    localStorage.setItem("theme_user_chosen", "true");
     getAppConfig().then(config => {
       setAppConfig({ ...config, theme: newTheme });
     }).catch(() => {});

@@ -112,18 +112,22 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
     const { x, y } = getViewportCenter();
     const appState = api.getAppState?.() || {};
 
-    // Auto-detect canvas theme accurately
-    const docTheme = typeof document !== "undefined" ? document.documentElement.getAttribute("data-theme") : null;
-    const isDarkCanvas =
-      theme === "dark" ||
-      docTheme === "dark" ||
-      appState.theme === "dark" ||
-      appState.viewBackgroundColor === "#121212" ||
-      appState.viewBackgroundColor === "#1e1e1e" ||
-      appState.viewBackgroundColor === "#18181b" ||
-      appState.viewBackgroundColor === "#000000";
+    // Auto-detect canvas theme accurately - dark by default in Excalideck
+    const docTheme =
+      (typeof document !== "undefined"
+        ? document.documentElement.getAttribute("data-theme") ||
+          document.querySelector(".app-layout")?.getAttribute("data-theme")
+        : null) || theme;
 
-    const effectiveTheme: "light" | "dark" = isDarkCanvas ? "dark" : "light";
+    const viewBg = (appState.viewBackgroundColor || "").trim().toLowerCase();
+    const isExplicitWhiteCanvas =
+      viewBg === "#ffffff" || viewBg === "#fff" || viewBg === "rgb(255, 255, 255)";
+
+    // Only switch to light palette if the entire environment and canvas are explicitly white/light
+    const isLightCanvas =
+      theme === "light" && docTheme === "light" && appState.theme === "light" && isExplicitWhiteCanvas;
+
+    const effectiveTheme: "light" | "dark" = isLightCanvas ? "light" : "dark";
 
     const elements = generateCalendar({
       year,
