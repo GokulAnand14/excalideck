@@ -60,6 +60,7 @@ pub fn run() {
             commands::vault_cmds::init_default_vault,
             commands::vault_cmds::get_recent_vaults,
             commands::vault_cmds::close_vault,
+            commands::vault_cmds::reveal_in_explorer,
             commands::file_cmds::read_drawing,
             commands::file_cmds::save_drawing,
             commands::file_cmds::create_drawing,

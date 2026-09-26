@@ -50,12 +50,17 @@ tauriConf.version = cleanVersion;
 fs.writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, 2) + "\n");
 console.log(`✅ Updated src-tauri/tauri.conf.json -> ${cleanVersion}`);
 
-// 3. Update src-tauri/Cargo.toml
+// 3. Update src-tauri/Cargo.toml & Cargo.lock
 const cargoPath = path.join(rootDir, "src-tauri", "Cargo.toml");
 let cargoToml = fs.readFileSync(cargoPath, "utf-8");
 cargoToml = cargoToml.replace(/^version = ".*?"/m, `version = "${cleanVersion}"`);
 fs.writeFileSync(cargoPath, cargoToml);
 console.log(`✅ Updated src-tauri/Cargo.toml -> ${cleanVersion}`);
+
+try {
+  execSync(`cargo check --manifest-path src-tauri/Cargo.toml`, { cwd: rootDir, stdio: "ignore" });
+  console.log(`✅ Updated src-tauri/Cargo.lock -> ${cleanVersion}`);
+} catch (_) {}
 
 // 4. Update landing/src/utils/os.ts
 const landingOsPath = path.join(rootDir, "landing", "src", "utils", "os.ts");
@@ -71,7 +76,7 @@ console.log("\n📦 Committing version bump, tagging, and pushing to GitHub...")
 
 try {
   execSync(
-    `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml landing/src/utils/os.ts scripts/release.js`,
+    `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock landing/src/utils/os.ts scripts/release.js`,
     { cwd: rootDir, stdio: "inherit" }
   );
 

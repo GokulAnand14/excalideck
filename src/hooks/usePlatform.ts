@@ -8,6 +8,7 @@ export interface PlatformState {
   isTablet: boolean;
   isDesktop: boolean;
   isTouch: boolean;
+  isCompact: boolean;
   defaultVaultPath: string | null;
   loading: boolean;
 }
@@ -55,8 +56,9 @@ export const usePlatform = () => {
       isNativeMobile: isMobileOS,
       isMobile: isMobileOS || isSmall,
       isTablet: isMid || (client.os === "ios" && width > 768),
-      isDesktop: !isMobileOS && !isSmall && !isMid,
+      isDesktop: !isMobileOS,
       isTouch: client.isTouch,
+      isCompact: width <= 560,
       defaultVaultPath: null,
       loading: true,
     };
@@ -79,7 +81,7 @@ export const usePlatform = () => {
           (effectiveOS === "android" && width >= 600 && width <= 1280) ||
           (client.isTouch && width > 768 && width <= 1180);
         const isMobile = isNativeMobile ? (width < 768 || !isTablet) : width <= 768;
-        const isDesktop = !isNativeMobile && width > 1024;
+        const isDesktop = !isNativeMobile;
 
         setPlatformState({
           os: effectiveOS,
@@ -88,6 +90,7 @@ export const usePlatform = () => {
           isTablet,
           isDesktop,
           isTouch: client.isTouch,
+          isCompact: width <= 560,
           defaultVaultPath: info.defaultVaultPath ?? null,
           loading: false,
         });
@@ -99,6 +102,7 @@ export const usePlatform = () => {
         const isMobileOS = client.os === "ios" || client.os === "android";
         const isTablet = client.isTouch && width >= 768 && width <= 1280;
         const isMobile = isMobileOS && width < 768;
+        const isDesktop = !isMobileOS;
 
         setPlatformState((prev) => ({
           ...prev,
@@ -106,8 +110,9 @@ export const usePlatform = () => {
           isNativeMobile: isMobileOS,
           isMobile: isMobile || width <= 768,
           isTablet,
-          isDesktop: !isMobileOS && width > 1024,
+          isDesktop,
           isTouch: client.isTouch,
+          isCompact: width <= 560,
           loading: false,
         }));
       }
@@ -124,13 +129,14 @@ export const usePlatform = () => {
           (prev.os === "android" && width >= 600 && width <= 1280) ||
           (client.isTouch && width > 768 && width <= 1180);
         const isMobile = prev.isNativeMobile ? (width < 768 || !isTablet) : width <= 768;
-        const isDesktop = !prev.isNativeMobile && width > 1024;
+        const isDesktop = !prev.isNativeMobile;
 
         return {
           ...prev,
           isMobile,
           isTablet,
           isDesktop,
+          isCompact: width <= 560,
         };
       });
     };

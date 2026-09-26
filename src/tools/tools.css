@@ -189,3 +189,27 @@
 .calendar-submit-btn:hover {
   opacity: 0.9;
 }
+
+@media (max-width: 640px) {
+  .canvas-tools-dock {
+    top: 8px;
+    right: 8px;
+    padding: 2px;
+  }
+
+  .canvas-tool-btn {
+    height: 28px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .calendar-popover-overlay {
+    justify-content: center;
+    padding: 56px 12px 12px 12px;
+  }
+
+  .calendar-popover {
+    width: 100%;
+    max-width: 310px;
+  }
+}

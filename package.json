@@ -5,7 +5,9 @@
   "homepage": "https://excalideck.vercel.app",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-assets.js",
     "dev": "vite",
+    "prebuild": "node scripts/copy-assets.js",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "landing:dev": "bun run --cwd landing dev",

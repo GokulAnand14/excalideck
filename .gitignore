@@ -33,3 +33,7 @@ bun.lockb
 .agents/
 skills-lock.json
 
+# Generated Excalidraw static assets
+public/fonts/
+public/locales/
+public/data/

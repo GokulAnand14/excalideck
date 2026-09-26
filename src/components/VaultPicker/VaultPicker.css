@@ -1,35 +1,62 @@
+/* ==========================================================================
+   Vault Picker Screen & Modal (Responsive, Modern Glassmorphism)
+   ========================================================================== */
+
+/* Overlay Container: Handles both Modal overlay and Standalone full view */
 .vault-picker-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.15s ease-out;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+.vault-picker-overlay.is-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+  padding: clamp(10px, 3vw, 24px);
+}
+
+.vault-picker-overlay.is-standalone {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: var(--bg-primary);
+  z-index: 10;
+  padding: clamp(16px, 4vh, 36px) clamp(12px, 3vw, 24px);
+  overflow-y: auto;
+}
+
+/* Modal Card Container */
 .vault-picker-modal {
   background-color: var(--bg-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--border-color);
   width: 100%;
-  max-width: min(480px, calc(100vw - 32px));
-  max-height: calc(100vh - 40px);
-  max-height: calc(100dvh - 40px);
+  max-width: 520px;
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
-  padding: clamp(20px, 5vw, 32px);
+  padding: clamp(18px, 3.5vw, 24px) clamp(16px, 4vw, 28px);
   color: var(--text-primary);
   position: relative;
   animation: scaleUp 0.15s ease-out;
+  scrollbar-width: thin;
+  box-sizing: border-box;
+  margin: auto;
 }
 
+.vault-picker-modal.is-standalone {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--border-color);
+}
+
+/* Close Button (Modal mode only) */
 .vault-modal-close {
   position: absolute;
   top: 16px;
@@ -39,13 +66,14 @@
   color: var(--text-muted);
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  transition: all 0.15s;
+  font-size: 13px;
+  transition: all 0.12s ease;
+  z-index: 5;
 }
 
 .vault-modal-close:hover {
@@ -53,186 +81,274 @@
   color: var(--text-primary);
 }
 
-/* Hero */
+/* Hero Section */
 .vault-picker-hero {
-  text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: clamp(14px, 2.5vh, 20px);
+}
+
+.vault-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2.5vw, 14px);
 }
 
 .vault-hero-logo {
-  width: 64px;
-  height: 64px;
+  width: clamp(36px, 6vw, 44px);
+  height: clamp(36px, 6vw, 44px);
   object-fit: contain;
-  border-radius: 16px;
-  margin: 0 auto 12px auto;
-  box-shadow: var(--shadow-md);
-  display: block;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
 }
 
-.vault-picker-hero h2 {
-  margin: 0 0 6px 0;
-  font-size: 20px;
-  font-weight: 700;
+.vault-hero-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vault-hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vault-hero-title-row h2 {
+  margin: 0;
+  font-size: clamp(16px, 2.8vw, 18px);
+  font-weight: 600;
   letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.vault-count-pill {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background-color: var(--hover-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
 }
 
 .vault-hero-subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: clamp(11.5px, 2vw, 12px);
   color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Options */
-.vault-picker-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 24px;
+/* Minimal Actions Bar */
+.vault-actions-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: clamp(12px, 2vh, 16px);
 }
 
-.vault-option-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-}
-
-.vault-option-card:hover {
-  border-color: var(--accent-color);
-  background-color: var(--hover-bg);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
-
-.vault-option-card.primary {
-  background: var(--accent-subtle);
-  border-color: var(--accent-color);
-}
-
-.vault-option-card.primary:hover {
-  background: var(--accent-subtle);
-  border-color: var(--accent-hover);
-}
-
-.vault-option-card.default-vault {
-  background: linear-gradient(135deg, var(--accent-subtle) 0%, rgba(99, 102, 241, 0.12) 100%);
-  border-color: var(--accent-color);
-  border-width: 1.5px;
-}
-
-.vault-option-card.default-vault:hover {
-  border-color: var(--accent-hover);
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.2);
-}
-
-.vault-option-card.default-vault .option-icon-wrapper.default-icon {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
-}
-
-.option-icon-wrapper {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-sm);
-  background: var(--hover-bg);
-  color: var(--accent-color);
+.vault-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  gap: clamp(4px, 1vw, 7px);
+  height: 36px;
+  padding: 0 clamp(6px, 1.5vw, 12px);
+  border-radius: 8px;
+  font-size: clamp(11.5px, 2vw, 12.5px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
-.vault-option-card.primary .option-icon-wrapper {
-  background: var(--accent-color);
-  color: #ffffff;
-}
-
-.option-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.option-title {
-  font-size: 13px;
-  font-weight: 600;
+.vault-action-btn.primary {
+  background-color: var(--accent-subtle);
+  border: 1px solid var(--accent-color);
   color: var(--text-primary);
 }
 
-.option-desc {
-  font-size: 11px;
+.vault-action-btn.primary:hover {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.vault-action-btn.secondary {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
 }
 
-/* Recents */
+.vault-action-btn.secondary:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+  background-color: var(--hover-bg);
+}
+
+/* Search / Filter Bar */
+.vault-search-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-bottom: clamp(12px, 2vh, 16px);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vault-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.vault-search-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 30px 0 32px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.12s ease;
+  box-sizing: border-box;
+}
+
+.vault-search-input:focus {
+  border-color: var(--accent-color);
+}
+
+.vault-search-clear {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 11px;
+}
+
+.vault-search-clear:hover {
+  color: var(--text-primary);
+}
+
+/* Recent Vaults Section */
 .vault-recents-section {
-  border-top: 1px solid var(--border-color);
-  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .recents-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+.recents-header span {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 10px;
+}
+
+.recents-subtext {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  text-transform: none !important;
+  color: var(--text-muted) !important;
+  opacity: 0.7;
 }
 
 .recents-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 180px;
+  max-height: min(320px, 38vh);
   overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
 }
 
-.recent-vault-item {
+/* Vault Card */
+.recent-vault-card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background-color: var(--hover-bg);
-  border: 1px solid var(--border-subtle);
+  justify-content: space-between;
+  padding: 10px clamp(8px, 2vw, 14px);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
   cursor: pointer;
-  transition: all 0.1s ease;
+  transition: all 0.12s ease;
+  user-select: none;
+  gap: clamp(6px, 1.5vw, 12px);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-.recent-vault-item:hover {
-  background-color: var(--active-bg);
+.recent-vault-card:hover {
+  background-color: var(--hover-bg);
   border-color: var(--border-color);
+  transform: translateY(-1px);
 }
 
-.recent-vault-item.active {
-  border-color: var(--accent-color);
-  background: var(--accent-subtle);
+.recent-vault-card.active {
+  border-color: rgba(99, 102, 241, 0.4);
+  background-color: rgba(99, 102, 241, 0.04);
 }
 
 .recent-vault-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  overflow: hidden;
+  gap: clamp(8px, 1.5vw, 10px);
+  min-width: 0;
+  flex: 1;
 }
 
-.recent-vault-icon {
-  color: var(--accent-color);
+.recent-vault-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background-color: var(--hover-bg);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+}
+
+.recent-vault-avatar.active {
+  background-color: var(--accent-subtle);
+  color: var(--accent-color);
 }
 
 .recent-vault-info {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+
+.recent-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .recent-name {
@@ -242,96 +358,207 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.recent-badge.active {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 6px #10b981;
 }
 
 .recent-path {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .recent-vault-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: clamp(4px, 1vw, 8px);
   flex-shrink: 0;
 }
 
-.recent-badge {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background-color: var(--accent-color);
-  color: #ffffff;
+.recent-vault-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.recent-drawings-count {
-  font-size: 11px;
-  color: var(--text-secondary);
-  background: var(--bg-primary);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.recent-time {
-  font-size: 11px;
+.recent-chip {
+  font-size: 10.5px;
   color: var(--text-muted);
+  background-color: var(--hover-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
-.recent-delete-btn {
+.recent-chip.time {
+  opacity: 0.8;
+}
+
+/* Quick Action Tools in Vault Card */
+.recent-actions-dock {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.recent-action-icon-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
   background: transparent;
   border: none;
   color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  padding: 0;
 }
 
-.recent-delete-btn:hover {
+.recent-action-icon-btn:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.recent-action-icon-btn.danger:hover {
   background-color: rgba(239, 68, 68, 0.15);
   color: #ef4444;
 }
 
-@media (max-width: 768px) {
+.recents-empty {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.recents-clear-btn {
+  margin-top: 8px;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
+
+/* Narrow width (<= 520px) */
+@media (max-width: 520px) {
   .vault-picker-modal {
-    padding: 20px 16px;
-    max-height: calc(100dvh - 24px);
-    width: 95%;
+    padding: 18px 16px;
+    border-radius: 12px;
   }
 
-  .vault-modal-close {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-  }
-
-  .vault-option-card {
-    min-height: 52px;
-    padding: 12px 14px;
-  }
-
-  .recent-vault-item {
-    min-height: 52px;
-    padding: 10px 12px;
-  }
-
-  .recent-delete-btn {
-    width: 36px;
-    height: 36px;
-    padding: 6px;
-  }
-
-  .recent-drawings-count {
-    font-size: 11px;
+  .recent-chip.time {
+    display: none;
   }
 }
 
+/* Extra narrow width (<= 430px) */
+@media (max-width: 430px) {
+  .vault-actions-bar {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
 
+  .vault-action-btn {
+    height: 38px;
+    justify-content: flex-start;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .recent-vault-meta {
+    display: none;
+  }
+
+  .recent-vault-card {
+    padding: 8px 10px;
+  }
+
+  .recent-vault-avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .recent-path {
+    font-size: 10px;
+  }
+}
+
+/* Short height screens (e.g. split view or low-res display) */
+@media (max-height: 620px) {
+  .vault-picker-modal {
+    padding: 14px 18px;
+    max-height: calc(100dvh - 20px);
+  }
+
+  .vault-picker-hero {
+    margin-bottom: 10px;
+  }
+
+  .vault-hero-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .vault-actions-bar {
+    margin-bottom: 10px;
+  }
+
+  .vault-search-container {
+    margin-bottom: 10px;
+  }
+
+  .recents-list {
+    max-height: 180px;
+  }
+}
+
+/* Tall screen enhancement */
+@media (min-height: 840px) {
+  .recents-list {
+    max-height: 400px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}

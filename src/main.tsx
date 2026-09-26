@@ -7,6 +7,13 @@ import "./index.css";
 // Set asset path for Excalidraw fonts and dynamic resources
 if (typeof window !== "undefined") {
   (window as any).EXCALIDRAW_ASSET_PATH = "/";
+  if ("fonts" in document) {
+    Promise.all([
+      document.fonts.load("20px Virgil"),
+      document.fonts.load("20px Excalifont"),
+      document.fonts.load("20px Cascadia"),
+    ]).catch(() => {});
+  }
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

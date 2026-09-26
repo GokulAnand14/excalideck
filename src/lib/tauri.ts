@@ -22,6 +22,7 @@ export const getDefaultVaultPath = () => invoke<string>("get_default_vault_path"
 export const initDefaultVault = () => invoke<VaultInfo>("init_default_vault");
 export const getRecentVaults = () => invoke<RecentVault[]>("get_recent_vaults");
 export const closeVault = () => invoke("close_vault");
+export const revealInExplorer = (path: string) => invoke("reveal_in_explorer", { path });
 
 // File commands
 export const readDrawing = (path: string) => invoke<DrawingData>("read_drawing", { path });

@@ -1,9 +1,20 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useDialog } from "../../context/DialogContext";
 import { usePlatform } from "../../hooks/usePlatform";
 import { RecentVault, VaultInfo } from "../../types/vault";
-import { IconFolderOpen, IconNewFolder, IconVault, IconSparkles, IconTrash } from "../common/Icons";
+import { revealInExplorer } from "../../lib/tauri";
+import {
+  IconFolderOpen,
+  IconNewFolder,
+  IconVault,
+  IconSparkles,
+  IconTrash,
+  IconSearch,
+  IconCopy,
+  IconCheck,
+  IconExternalLink,
+} from "../common/Icons";
 import "./VaultPicker.css";
 
 interface VaultPickerProps {
@@ -27,8 +38,21 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
   onOpenDefaultVault,
   onClose,
 }) => {
-  const { isMobile } = usePlatform();
+  const { isMobile, isDesktop, isNativeMobile } = usePlatform();
   const { promptDialog, confirmDialog } = useDialog();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [copiedPath, setCopiedPath] = useState<string | null>(null);
+
+  // Close on Escape key if allowed
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && onClose && activeVaultPath) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, activeVaultPath]);
 
   const handleOpenExisting = async () => {
     try {
@@ -47,7 +71,7 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
 
   const handleCreateNew = async () => {
     try {
-      if (isMobile) {
+      if (isNativeMobile) {
         const name = await promptDialog({
           title: "Create New Vault",
           subtitle: "Stored in app sandboxed storage",
@@ -85,13 +109,30 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
     }
   };
 
+  const handleCopyPath = (e: React.MouseEvent, path: string) => {
+    e.stopPropagation();
+    navigator.clipboard?.writeText(path).then(() => {
+      setCopiedPath(path);
+      setTimeout(() => setCopiedPath(null), 1800);
+    });
+  };
+
+  const handleRevealInExplorer = async (e: React.MouseEvent, path: string) => {
+    e.stopPropagation();
+    try {
+      await revealInExplorer(path);
+    } catch (err) {
+      console.error("Failed to reveal folder:", err);
+    }
+  };
+
   const handleDeleteVault = async (e: React.MouseEvent, vaultPath: string, vaultName: string) => {
     e.stopPropagation();
     if (!onDeleteVault) return;
     const confirmed = await confirmDialog({
       title: "Delete Vault?",
       message: `Are you sure you want to delete "${vaultName}" and all drawings inside it? This cannot be undone.`,
-      confirmText: "Delete",
+      confirmText: "Delete Vault",
       danger: true,
       icon: <IconTrash size={16} />,
     });
@@ -103,6 +144,10 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
   const formatLastOpened = (timestamp: number) => {
     if (!timestamp) return "";
     const date = new Date(timestamp * 1000);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
     return date.toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
@@ -110,151 +155,249 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
   };
 
   // Merge appVaults and recentVaults deduplicated by path
-  const vaultsMap = new Map<string, { path: string; name: string; drawingCount?: number; lastOpened?: number }>();
+  const allVaults = useMemo(() => {
+    const vaultsMap = new Map<string, { path: string; name: string; drawingCount?: number; lastOpened?: number }>();
 
-  // Add app vaults first
-  for (const av of appVaults) {
-    vaultsMap.set(av.path, {
-      path: av.path,
-      name: av.name,
-      drawingCount: av.drawingCount,
-    });
-  }
-
-  // Overlay recent vaults info
-  for (const rv of recentVaults) {
-    const existing = vaultsMap.get(rv.path);
-    if (existing) {
-      existing.lastOpened = rv.lastOpened;
-    } else {
-      vaultsMap.set(rv.path, {
-        path: rv.path,
-        name: rv.name,
-        lastOpened: rv.lastOpened,
+    for (const av of appVaults) {
+      vaultsMap.set(av.path, {
+        path: av.path,
+        name: av.name,
+        drawingCount: av.drawingCount,
       });
     }
-  }
 
-  const allVaults = Array.from(vaultsMap.values());
+    for (const rv of recentVaults) {
+      const existing = vaultsMap.get(rv.path);
+      if (existing) {
+        existing.lastOpened = rv.lastOpened;
+      } else {
+        vaultsMap.set(rv.path, {
+          path: rv.path,
+          name: rv.name,
+          lastOpened: rv.lastOpened,
+        });
+      }
+    }
+
+    return Array.from(vaultsMap.values());
+  }, [appVaults, recentVaults]);
+
+  // Filter vaults according to search query
+  const filteredVaults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return allVaults;
+    return allVaults.filter(
+      (v) =>
+        v.name.toLowerCase().includes(query) ||
+        v.path.toLowerCase().includes(query)
+    );
+  }, [allVaults, searchQuery]);
 
   return (
     <div className="vault-picker-overlay" onClick={onClose}>
       <div className="vault-picker-modal" onClick={(e) => e.stopPropagation()}>
         {onClose && activeVaultPath && (
-          <button className="vault-modal-close" onClick={onClose} title="Close">
+          <button className="vault-modal-close" onClick={onClose} title="Close (Esc)">
             ✕
           </button>
         )}
 
+        {/* Minimal Hero Header */}
         <div className="vault-picker-hero">
-          <img src="/logo.png" className="vault-hero-logo" alt="Excalideck Logo" />
-          <h2>Excalideck</h2>
-          <p className="vault-hero-subtitle">
-            {isMobile ? "Choose or create a sketchbook vault" : "Obsidian-powered local sketching vault"}
-          </p>
+          <div className="vault-hero-brand">
+            <img src="/logo.png" className="vault-hero-logo" alt="Excalideck Logo" />
+            <div className="vault-hero-titles">
+              <div className="vault-hero-title-row">
+                <h2>Excalideck Vaults</h2>
+                {allVaults.length > 0 && (
+                  <span className="vault-count-pill">{allVaults.length} vaults</span>
+                )}
+              </div>
+              <p className="vault-hero-subtitle">
+                {isNativeMobile
+                  ? "Choose or create a sketchbook vault"
+                  : "Local, offline vaults with zero cloud lock-in"}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="vault-picker-options">
+        {/* Minimal Actions Bar */}
+        <div className="vault-actions-bar">
           <button
-            className="vault-option-card primary"
+            className="vault-action-btn primary"
             onClick={handleCreateNew}
+            title="Create a new vault in a folder of your choice"
           >
-            <div className="option-icon-wrapper">
-              <IconNewFolder size={20} />
-            </div>
-            <div className="option-text">
-              <span className="option-title">Create New Vault</span>
-              <span className="option-desc">
-                {isMobile ? "Name a fresh sketchbook of your choice" : "Start a fresh sketchbook in a new folder"}
-              </span>
-            </div>
+            <IconNewFolder size={15} />
+            <span>New Vault</span>
           </button>
+
+          {!isNativeMobile && (
+            <button
+              className="vault-action-btn secondary"
+              onClick={handleOpenExisting}
+              title="Open any existing folder on your computer"
+            >
+              <IconFolderOpen size={15} />
+              <span>Open Folder</span>
+            </button>
+          )}
 
           {onOpenDefaultVault && (
             <button
-              className="vault-option-card default-vault"
+              className="vault-action-btn secondary"
               onClick={onOpenDefaultVault}
+              title="Quick-start default vault in Documents"
             >
-              <div className="option-icon-wrapper default-icon">
-                <IconSparkles size={20} />
-              </div>
-              <div className="option-text">
-                <span className="option-title">Open App Vault</span>
-                <span className="option-desc">
-                  {isMobile ? "Standard default sketchbook" : "Quick-start vault in Documents"}
-                </span>
-              </div>
-            </button>
-          )}
-
-          {!isMobile && (
-            <button
-              className="vault-option-card"
-              onClick={handleOpenExisting}
-            >
-              <div className="option-icon-wrapper">
-                <IconFolderOpen size={20} />
-              </div>
-              <div className="option-text">
-                <span className="option-title">Open Existing Folder</span>
-                <span className="option-desc">Use an existing folder containing drawings</span>
-              </div>
+              <IconSparkles size={14} />
+              <span>App Vault</span>
             </button>
           )}
         </div>
 
-        {allVaults.length > 0 && (
-          <div className="vault-recents-section">
-            <div className="recents-header">
-              <span>{isMobile ? "Your Vaults" : "Recent Vaults"}</span>
-            </div>
-            <div className="recents-list">
-              {allVaults.map((vault) => {
-                const isActive = activeVaultPath === vault.path;
-                return (
-                  <div
-                    key={vault.path}
-                    className={`recent-vault-item ${isActive ? "active" : ""}`}
-                    onClick={() => onOpenVault(vault.path)}
-                  >
-                    <div className="recent-vault-left">
-                      <IconVault size={16} className="recent-vault-icon" />
-                      <div className="recent-vault-info">
-                        <span className="recent-name">{vault.name}</span>
-                        <span className="recent-path" title={vault.path}>
-                          {vault.path}
-                        </span>
-                      </div>
-                    </div>
+        {/* Vault Filter / Search Bar */}
+        {allVaults.length > 1 && (
+          <div className="vault-search-container">
+            <IconSearch size={14} className="vault-search-icon" />
+            <input
+              type="text"
+              className="vault-search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter vaults by name or path..."
+            />
+            {searchQuery && (
+              <button
+                className="vault-search-clear"
+                onClick={() => setSearchQuery("")}
+                title="Clear filter"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
 
-                    <div className="recent-vault-right">
-                      {isActive && <span className="recent-badge">Active</span>}
+        {/* Recent Vaults List */}
+        <div className="vault-recents-section">
+          <div className="recents-header">
+            <span>{isNativeMobile ? "Your Vaults" : "Vault Folders"}</span>
+            {filteredVaults.length > 0 && (
+              <span className="recents-subtext">Click to open</span>
+            )}
+          </div>
+
+          <div className="recents-list">
+            {filteredVaults.map((vault) => {
+              const isActive = activeVaultPath === vault.path;
+              const isCopied = copiedPath === vault.path;
+
+              return (
+                <div
+                  key={vault.path}
+                  className={`recent-vault-card ${isActive ? "active" : ""}`}
+                  onClick={() => onOpenVault(vault.path)}
+                  title={`Open "${vault.name}"`}
+                >
+                  <div className="recent-vault-left">
+                    <div className={`recent-vault-avatar ${isActive ? "active" : ""}`}>
+                      <IconVault size={16} />
+                    </div>
+                    <div className="recent-vault-info">
+                      <div className="recent-name-row">
+                        <span className="recent-name">{vault.name}</span>
+                        {isActive && (
+                          <span className="recent-badge active">
+                            <span className="status-dot" />
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <span className="recent-path" title={vault.path}>
+                        {vault.path}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="recent-vault-right">
+                    <div className="recent-vault-meta">
                       {typeof vault.drawingCount === "number" && (
-                        <span className="recent-drawings-count">
-                          {vault.drawingCount} {vault.drawingCount === 1 ? "drawing" : "drawings"}
+                        <span className="recent-chip">
+                          {vault.drawingCount} {vault.drawingCount === 1 ? "sketch" : "sketches"}
                         </span>
                       )}
                       {vault.lastOpened ? (
-                        <span className="recent-time">
+                        <span className="recent-chip time">
                           {formatLastOpened(vault.lastOpened)}
                         </span>
                       ) : null}
+                    </div>
+
+                    {/* Quick Action Tools per Vault */}
+                    <div className="recent-actions-dock">
+                      {/* Copy Path */}
+                      <button
+                        className="recent-action-icon-btn"
+                        onClick={(e) => handleCopyPath(e, vault.path)}
+                        title={isCopied ? "Path copied!" : "Copy vault path"}
+                        aria-label="Copy vault path"
+                      >
+                        {isCopied ? (
+                          <IconCheck size={13} style={{ color: "#10b981" }} />
+                        ) : (
+                          <IconCopy size={13} />
+                        )}
+                      </button>
+
+                      {/* Reveal in Explorer (Desktop only) */}
+                      {isDesktop && (
+                        <button
+                          className="recent-action-icon-btn"
+                          onClick={(e) => handleRevealInExplorer(e, vault.path)}
+                          title="Open folder in File Explorer"
+                          aria-label="Open folder in File Explorer"
+                        >
+                          <IconExternalLink size={13} />
+                        </button>
+                      )}
+
+                      {/* Delete / Remove */}
                       {onDeleteVault && (
                         <button
-                          className="recent-delete-btn"
+                          className="recent-action-icon-btn danger"
                           onClick={(e) => handleDeleteVault(e, vault.path, vault.name)}
                           title="Delete Vault"
+                          aria-label="Delete Vault"
                         >
-                          <IconTrash size={14} />
+                          <IconTrash size={13} />
                         </button>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
+
+            {filteredVaults.length === 0 && (
+              <div className="recents-empty">
+                {searchQuery ? (
+                  <>
+                    <p>No vaults found matching "{searchQuery}"</p>
+                    <button
+                      className="recents-clear-btn"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      Clear search
+                    </button>
+                  </>
+                ) : (
+                  <p>No vaults found. Create or open a folder above to get started.</p>
+                )}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

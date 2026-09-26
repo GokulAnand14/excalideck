@@ -1,3 +1,29 @@
+/* Excalidraw Core Handwriting & Canvas Fonts */
+@font-face {
+  font-family: "Virgil";
+  src: url("/fonts/Virgil/Virgil-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Excalifont";
+  src: url("/fonts/Excalifont/Excalifont-Regular-a88b72a24fb54c9f94e3b5fdaa7481c9.woff2") format("woff2"),
+       url("/fonts/Virgil/Virgil-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cascadia";
+  src: url("/fonts/Cascadia/CascadiaCode-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Modern macOS Light Theme */
   --bg-primary: #ffffff;
@@ -74,7 +100,7 @@ html, body {
   height: 100vh;
   height: 100dvh;
   width: 100vw;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
   overscroll-behavior: none;
   background-color: var(--bg-primary);
