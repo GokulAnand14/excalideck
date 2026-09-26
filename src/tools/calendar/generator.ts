@@ -23,12 +23,12 @@ const LIGHT_PALETTE = {
 };
 
 const DARK_PALETTE = {
-  border: "#334155",
+  border: "#475569",
   bg: "transparent",
   text: "#ffffff",
-  dimBorder: "#1e293b",
+  dimBorder: "#334155",
   dimBg: "transparent",
-  dimText: "#64748b",
+  dimText: "#94a3b8",
 };
 
 const baseEl = (id: string, type: string, x: number, y: number, w: number, h: number, gId: string, opacity = 100) => ({
@@ -149,16 +149,16 @@ export function generateCalendar({
 
     if (idx < startDay) {
       const prevDay = prevDaysInMonth - (startDay - 1 - idx);
-      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimBorder, pal.dimBg, gId, 40));
-      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${prevDay}`, 13, pal.dimText, "left", gId, 40));
+      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimBorder, pal.dimBg, gId, 60));
+      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${prevDay}`, 13, pal.dimText, "left", gId, 75));
     } else if (idx < startDay + daysInMonth) {
       const dayNum = idx - startDay + 1;
       elements.push(makeRect(cellX, cellY, cellW, cellH, pal.border, pal.bg, gId));
       elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${dayNum}`, 16, pal.text, "left", gId));
     } else {
       const nextDay = idx - (startDay + daysInMonth) + 1;
-      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimBorder, pal.dimBg, gId, 40));
-      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${nextDay}`, 13, pal.dimText, "left", gId, 40));
+      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimBorder, pal.dimBg, gId, 60));
+      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${nextDay}`, 13, pal.dimText, "left", gId, 75));
     }
   }
 

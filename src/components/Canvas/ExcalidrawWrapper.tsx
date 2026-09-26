@@ -113,15 +113,15 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
     const appState = api.getAppState?.() || {};
 
     // Auto-detect canvas theme accurately
-    const canvasBg = appState.viewBackgroundColor || "";
+    const docTheme = typeof document !== "undefined" ? document.documentElement.getAttribute("data-theme") : null;
     const isDarkCanvas =
-      appState.theme === "dark" ||
       theme === "dark" ||
-      canvasBg === "#121212" ||
-      canvasBg === "#1e1e1e" ||
-      canvasBg === "#18181b" ||
-      canvasBg === "#000000" ||
-      (canvasBg.startsWith("#") && parseInt(canvasBg.replace("#", ""), 16) < 0x888888);
+      docTheme === "dark" ||
+      appState.theme === "dark" ||
+      appState.viewBackgroundColor === "#121212" ||
+      appState.viewBackgroundColor === "#1e1e1e" ||
+      appState.viewBackgroundColor === "#18181b" ||
+      appState.viewBackgroundColor === "#000000";
 
     const effectiveTheme: "light" | "dark" = isDarkCanvas ? "dark" : "light";
 

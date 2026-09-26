@@ -130,6 +130,8 @@
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
   border-radius: 6px;
   color: var(--text-primary, #f4f4f5);
+  -webkit-text-fill-color: var(--text-primary, #f4f4f5);
+  color-scheme: dark;
   font-size: 12px;
   padding: 0 8px;
   outline: none;
@@ -138,6 +140,7 @@
 .calendar-select option {
   background: #18181b;
   color: #f4f4f5;
+  -webkit-text-fill-color: #f4f4f5;
 }
 
 .calendar-year-input {
@@ -146,7 +149,9 @@
   background: var(--hover-bg, rgba(255, 255, 255, 0.06));
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
   border-radius: 6px;
-  color: var(--text-primary, #f4f4f5);
+  color: var(--text-primary, #f4f4f5) !important;
+  -webkit-text-fill-color: var(--text-primary, #f4f4f5) !important;
+  color-scheme: dark;
   font-size: 12px;
   text-align: center;
   outline: none;

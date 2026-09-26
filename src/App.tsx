@@ -75,6 +75,10 @@ const App: React.FC = () => {
   );
 
   const handleOpenVault = async (path: string) => {
+    if (activeVault?.path === path) {
+      setShowVaultPickerModal(false);
+      return;
+    }
     await closeFile();
     hasAutoOpenedVaultRef.current = null;
     await openVault(path);
