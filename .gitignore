@@ -20,8 +20,6 @@ Thumbs.db
 *.swp
 *.swo
 
-# Bun
-bun.lockb
 
 # Environment & Keys
 .env
