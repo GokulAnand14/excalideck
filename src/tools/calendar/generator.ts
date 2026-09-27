@@ -3,7 +3,7 @@ export interface CalendarOptions {
   month: number;
   centerX: number;
   centerY: number;
-  theme?: "light" | "dark";
+  theme?: "white" | "light" | "dark";
 }
 
 const MONTHS = [
@@ -13,22 +13,38 @@ const MONTHS = [
 
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-const LIGHT_PALETTE = {
-  border: "#94a3b8",
-  bg: "#ffffff",
-  text: "#0f172a",
-  dimBorder: "#cbd5e1",
-  dimBg: "#f8fafc",
-  dimText: "#64748b",
+const WHITE_PALETTE = {
+  cardBg: "#ffffff",
+  cardBorder: "#cbd5e1",
+  titleBg: "#ffffff",
+  titleBorder: "#cbd5e1",
+  titleText: "#0f172a",
+  headerBg: "#f1f5f9",
+  headerBorder: "#cbd5e1",
+  headerText: "#334155",
+  cellBg: "#ffffff",
+  cellBorder: "#cbd5e1",
+  cellText: "#0f172a",
+  dimCellBg: "#f8fafc",
+  dimCellBorder: "#e2e8f0",
+  dimCellText: "#94a3b8",
 };
 
 const DARK_PALETTE = {
-  border: "#64748b",
-  bg: "transparent",
-  text: "#ffffff",
-  dimBorder: "#334155",
-  dimBg: "transparent",
-  dimText: "#cbd5e1",
+  cardBg: "#1e293b",
+  cardBorder: "#334155",
+  titleBg: "#1e293b",
+  titleBorder: "#334155",
+  titleText: "#f8fafc",
+  headerBg: "#0f172a",
+  headerBorder: "#334155",
+  headerText: "#cbd5e1",
+  cellBg: "#1e293b",
+  cellBorder: "#334155",
+  cellText: "#ffffff",
+  dimCellBg: "#0f172a",
+  dimCellBorder: "#1e293b",
+  dimCellText: "#64748b",
 };
 
 const baseEl = (id: string, type: string, x: number, y: number, w: number, h: number, gId: string, opacity = 100) => ({
@@ -67,12 +83,15 @@ const makeRect = (
   stroke: string,
   bg: string,
   gId: string,
-  opacity = 100
+  opacity = 100,
+  strokeWidth = 1.5,
+  roundness: { type: number } | null = { type: 3 }
 ) => ({
   ...baseEl(`rect_${Math.random().toString(36).slice(2, 9)}`, "rectangle", x, y, w, h, gId, opacity),
   strokeColor: stroke,
   backgroundColor: bg,
-  roundness: null,
+  strokeWidth,
+  roundness,
 });
 
 const makeText = (
@@ -104,9 +123,9 @@ export function generateCalendar({
   month,
   centerX,
   centerY,
-  theme = "dark",
+  theme = "white",
 }: CalendarOptions): any[] {
-  const pal = theme === "light" ? LIGHT_PALETTE : DARK_PALETTE;
+  const pal = theme === "dark" ? DARK_PALETTE : WHITE_PALETTE;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevDaysInMonth = new Date(year, month, 0).getDate();
   const startDay = (new Date(year, month, 1).getDay() + 6) % 7;
@@ -125,18 +144,28 @@ export function generateCalendar({
   const gId = `cal_${Math.random().toString(36).slice(2, 9)}`;
   const elements: any[] = [];
 
-  // 1. Title Banner (Boxy)
+  // 0. Solid Card Backdrop Container (Ensures crisp contrast on any canvas background)
+  const pad = 16;
+  const cardX = startX - pad;
+  const cardY = startY - pad;
+  const cardW = totalW + pad * 2;
+  const cardH = totalH + pad * 2;
+  elements.push(
+    makeRect(cardX, cardY, cardW, cardH, pal.cardBorder, pal.cardBg, gId, 100, 1.5, { type: 3 })
+  );
+
+  // 1. Title Banner
   const titleW = 240;
   const titleX = centerX - titleW / 2;
-  elements.push(makeRect(titleX, startY, titleW, titleH, pal.border, pal.bg, gId));
-  elements.push(makeText(titleX, startY + 8, titleW, 24, `${MONTHS[month]} ${year}`, 20, pal.text, "center", gId));
+  elements.push(makeRect(titleX, startY, titleW, titleH, pal.titleBorder, pal.titleBg, gId, 100, 1.5, { type: 3 }));
+  elements.push(makeText(titleX, startY + 8, titleW, 24, `${MONTHS[month]} ${year}`, 20, pal.titleText, "center", gId));
 
   // 2. 7 Weekday Header Badges
   const headerY = startY + titleH + 12;
   WEEKDAYS.forEach((name, col) => {
     const colX = startX + col * (cellW + gap);
-    elements.push(makeRect(colX, headerY, cellW, headerH, pal.border, pal.bg, gId));
-    elements.push(makeText(colX, headerY + 4, cellW, headerH - 8, name, 12, pal.text, "center", gId));
+    elements.push(makeRect(colX, headerY, cellW, headerH, pal.headerBorder, pal.headerBg, gId, 100, 1, { type: 3 }));
+    elements.push(makeText(colX, headerY + 4, cellW, headerH - 8, name, 12, pal.headerText, "center", gId));
   });
 
   // 3. Day Grid Tiles
@@ -149,16 +178,16 @@ export function generateCalendar({
 
     if (idx < startDay) {
       const prevDay = prevDaysInMonth - (startDay - 1 - idx);
-      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimBorder, pal.dimBg, gId, 60));
-      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${prevDay}`, 13, pal.dimText, "left", gId, 85));
+      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimCellBorder, pal.dimCellBg, gId, 100, 1, { type: 3 }));
+      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${prevDay}`, 13, pal.dimCellText, "left", gId));
     } else if (idx < startDay + daysInMonth) {
       const dayNum = idx - startDay + 1;
-      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.border, pal.bg, gId));
-      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${dayNum}`, 16, pal.text, "left", gId));
+      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.cellBorder, pal.cellBg, gId, 100, 1, { type: 3 }));
+      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${dayNum}`, 16, pal.cellText, "left", gId));
     } else {
       const nextDay = idx - (startDay + daysInMonth) + 1;
-      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimBorder, pal.dimBg, gId, 60));
-      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${nextDay}`, 13, pal.dimText, "left", gId, 85));
+      elements.push(makeRect(cellX, cellY, cellW, cellH, pal.dimCellBorder, pal.dimCellBg, gId, 100, 1, { type: 3 }));
+      elements.push(makeText(cellX + 8, cellY + 6, 25, 18, `${nextDay}`, 13, pal.dimCellText, "left", gId));
     }
   }
 

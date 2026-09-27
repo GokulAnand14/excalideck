@@ -114,31 +114,14 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
     if (!api) return;
 
     const { x, y } = getViewportCenter();
-    const appState = api.getAppState?.() || {};
 
-    // Auto-detect canvas theme accurately - dark by default in Excalideck
-    const docTheme =
-      (typeof document !== "undefined"
-        ? document.documentElement.getAttribute("data-theme") ||
-          document.querySelector(".app-layout")?.getAttribute("data-theme")
-        : null) || theme;
-
-    const viewBg = (appState.viewBackgroundColor || "").trim().toLowerCase();
-    const isExplicitWhiteCanvas =
-      viewBg === "#ffffff" || viewBg === "#fff" || viewBg === "rgb(255, 255, 255)";
-
-    // Only switch to light palette if the entire environment and canvas are explicitly white/light
-    const isLightCanvas =
-      theme === "light" && docTheme === "light" && appState.theme === "light" && isExplicitWhiteCanvas;
-
-    const effectiveTheme: "light" | "dark" = isLightCanvas ? "light" : "dark";
-
+    // Default to clean solid white background for maximum readability across all canvas modes
     const elements = generateCalendar({
       year,
       month,
       centerX: x,
       centerY: y,
-      theme: effectiveTheme,
+      theme: "white",
     });
 
     const current = Array.from(api.getSceneElements?.() || []);
