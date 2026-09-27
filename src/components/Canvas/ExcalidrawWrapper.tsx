@@ -36,6 +36,12 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
   const excalidrawAPIRef = useRef<any>(null);
   const prevThemeRef = useRef(theme);
 
+  const initialDataRef = useRef(initialData);
+  initialDataRef.current = initialData;
+
+  const onAPIMountRef = useRef(onAPIMount);
+  onAPIMountRef.current = onAPIMount;
+
   // Calendar Tool State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -54,21 +60,19 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
     }
   };
 
-  const handleAPIMount = useCallback(
-    (api: any) => {
-      excalidrawAPIRef.current = api;
-      if (initialData?.files) {
-        const fileValues = Object.values(initialData.files).filter(Boolean) as any[];
-        if (fileValues.length > 0) {
-          api.addFiles(fileValues);
-        }
+  const handleAPIMount = useCallback((api: any) => {
+    excalidrawAPIRef.current = api;
+    const files = initialDataRef.current?.files;
+    if (files) {
+      const fileValues = Object.values(files).filter(Boolean) as any[];
+      if (fileValues.length > 0) {
+        api.addFiles(fileValues);
       }
-      if (onAPIMount) {
-        onAPIMount(api);
-      }
-    },
-    [onAPIMount, initialData?.files]
-  );
+    }
+    if (onAPIMountRef.current) {
+      onAPIMountRef.current(api);
+    }
+  }, []);
 
   // Sync theme changes to Excalidraw instance ONLY when theme actually toggles
   useEffect(() => {
@@ -168,7 +172,7 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
           initialData.appState?.scrollX === undefined
       ),
     };
-  }, [fileName]);
+  }, [initialData, theme]);
 
   const excalidrawChildren = useMemo(
     () => (
@@ -233,7 +237,6 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
         />
 
         <Excalidraw
-          key={fileName || "canvas"}
           excalidrawAPI={handleAPIMount}
           initialData={memoizedInitialData}
           theme={theme}

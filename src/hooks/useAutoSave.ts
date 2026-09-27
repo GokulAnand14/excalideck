@@ -57,14 +57,28 @@ export const useAutoSave = (saveCallback: SaveCallback) => {
     []
   );
 
-  // Clean up on unmount
+  // Clean up on unmount and ensure pending saves flush on tab switch or window blur
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flush();
+      }
+    };
+    const handleBeforeUnload = () => {
+      flush();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
       }
     };
-  }, []);
+  }, [flush]);
 
   return { triggerSave, flush, cancel };
 };

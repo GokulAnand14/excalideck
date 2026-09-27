@@ -17,6 +17,7 @@ export const useExcalidrawBridge = () => {
   const excalidrawAPIRef = useRef<any>(null);
   const isSwitchingRef = useRef<boolean>(false);
   const lastSavedContentRef = useRef<string>("");
+  const loadIdRef = useRef<number>(0);
 
   const performSave = useCallback(
     async (elements: readonly any[], appState: any, files: any) => {
@@ -26,8 +27,22 @@ export const useExcalidrawBridge = () => {
         // Merge files from callback and excalidrawAPI instance if available
         const apiFiles = excalidrawAPIRef.current?.getFiles() || {};
         const mergedFiles = { ...apiFiles, ...(files || {}) };
-        const content = serializeAsJSON(elements as any, appState, mergedFiles, "local");
-        
+
+        // Only retain binary files that are actually referenced by image elements in the current scene
+        const referencedFileIds = new Set(
+          (elements || [])
+            .filter((el: any) => el && el.type === "image" && el.fileId)
+            .map((el: any) => el.fileId)
+        );
+        const relevantFiles: Record<string, any> = {};
+        for (const fileId of referencedFileIds) {
+          if (mergedFiles[fileId]) {
+            relevantFiles[fileId] = mergedFiles[fileId];
+          }
+        }
+
+        const content = serializeAsJSON(elements as any, appState, relevantFiles, "local");
+
         // Skip disk write if content is unchanged
         if (content === lastSavedContentRef.current) return;
         lastSavedContentRef.current = content;
@@ -45,17 +60,34 @@ export const useExcalidrawBridge = () => {
     excalidrawAPIRef.current = api;
   }, []);
 
+  const safeTriggerSave = useCallback(
+    (elements: readonly any[], appState: any, files: any) => {
+      if (isSwitchingRef.current || !currentFileRef.current) return;
+      triggerSave(elements, appState, files);
+    },
+    [triggerSave]
+  );
+
   const loadFile = useCallback(
     async (path: string) => {
       if (path === currentFileRef.current) return;
 
-      isSwitchingRef.current = true;
+      const thisLoadId = ++loadIdRef.current;
+
       try {
-        // 1. Flush any pending save for current file
+        // 1. Flush any pending save for current file BEFORE marking switching
         await flush();
 
-        // 2. Read new drawing from backend
+        // 2. Activate switching guard and cancel any lingering debounce timer
+        isSwitchingRef.current = true;
+        cancel();
+
+        // 3. Read new drawing from backend
         const data: DrawingData = await readDrawing(path);
+
+        // Discard stale load requests if another loadFile was invoked concurrently
+        if (thisLoadId !== loadIdRef.current) return;
+
         const parsed = JSON.parse(data.content);
         const elements = parsed.elements || [];
         const appState = parsed.appState || {};
@@ -72,15 +104,26 @@ export const useExcalidrawBridge = () => {
             ? Math.min(Math.max(rawZoom, 0.1), 3.0)
             : 1;
 
+        const currentTheme =
+          excalidrawAPIRef.current?.getAppState?.()?.theme || appState.theme || "dark";
+
         const cleanAppState: Record<string, any> = {
           ...appState,
           isLoading: false,
+          theme: currentTheme,
           zoom: { value: validZoom },
           scrollX: typeof appState.scrollX === "number" ? appState.scrollX : 0,
           scrollY: typeof appState.scrollY === "number" ? appState.scrollY : 0,
+          selectedElementIds: {},
+          selectedGroupIds: {},
+          editingLinearElement: null,
+          editingElement: null,
         };
 
-        // 3. Update scene in-place if Excalidraw API is already mounted, else set initialData
+        // Always keep initialData updated in state so fresh mounts have the correct data
+        setInitialData({ elements, appState: cleanAppState, files });
+
+        // 4. Update scene in-place if Excalidraw API is already mounted
         if (excalidrawAPIRef.current) {
           // CRITICAL: Feed binary files to Excalidraw's binary file cache first!
           const fileValues = Object.values(files).filter(Boolean) as any[];
@@ -103,15 +146,17 @@ export const useExcalidrawBridge = () => {
               animate: false,
             });
           }
-        } else {
-          // First load before Excalidraw mounts
-          setInitialData({ elements, appState: cleanAppState, files });
         }
       } catch (e) {
         console.error(`[useExcalidrawBridge] Failed to load drawing "${path}":`, e);
         cancel();
       } finally {
-        isSwitchingRef.current = false;
+        // Keep switching guard active briefly so Excalidraw's initial onChange from updateScene is ignored
+        setTimeout(() => {
+          if (thisLoadId === loadIdRef.current) {
+            isSwitchingRef.current = false;
+          }
+        }, 150);
       }
     },
     [flush, cancel]
@@ -119,15 +164,20 @@ export const useExcalidrawBridge = () => {
 
   const closeFile = useCallback(async () => {
     await flush();
+    cancel();
     setCurrentFile(null);
     currentFileRef.current = null;
     setInitialData(null);
     lastSavedContentRef.current = "";
     if (excalidrawAPIRef.current) {
-      excalidrawAPIRef.current.resetScene();
+      try {
+        excalidrawAPIRef.current.resetScene();
+      } catch (e) {
+        // ignore
+      }
       excalidrawAPIRef.current = null;
     }
-  }, [flush]);
+  }, [flush, cancel]);
 
   const getExcalidrawAPI = useCallback(() => {
     return excalidrawAPIRef.current;
@@ -138,7 +188,8 @@ export const useExcalidrawBridge = () => {
     initialData,
     loadFile,
     closeFile,
-    triggerSave,
+    triggerSave: safeTriggerSave,
+    flush,
     setExcalidrawAPI,
     getExcalidrawAPI,
   };

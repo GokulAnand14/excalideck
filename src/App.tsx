@@ -44,6 +44,7 @@ const App: React.FC = () => {
     loadFile,
     closeFile,
     triggerSave,
+    flush,
     setExcalidrawAPI,
   } = useExcalidrawBridge();
 
@@ -162,6 +163,9 @@ const App: React.FC = () => {
   };
 
   const handleMoveFile = async (src: string, destFolder: string) => {
+    if (currentFile === src || currentFile?.startsWith(src + "/")) {
+      await flush();
+    }
     const newPath = await moveFile(src, destFolder);
     if (newPath && currentFile === src) {
       await loadFile(newPath);
@@ -169,13 +173,16 @@ const App: React.FC = () => {
   };
 
   const handleDeleteFile = async (path: string) => {
-    await deleteFile(path);
     if (currentFile === path || currentFile?.startsWith(path + "/")) {
       await closeFile();
     }
+    await deleteFile(path);
   };
 
   const handleRenameFile = async (oldPath: string, newName: string) => {
+    if (currentFile === oldPath || currentFile?.startsWith(oldPath + "/")) {
+      await flush();
+    }
     const newPath = await renameFile(oldPath, newName);
     if (newPath && currentFile === oldPath) {
       await loadFile(newPath);
