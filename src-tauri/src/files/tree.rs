@@ -41,12 +41,14 @@ fn build_tree_recursive(root: &Path, current: &Path) -> Result<FileTreeNode, Str
         let mut entries: Vec<_> = std::fs::read_dir(current)
             .map_err(|e| e.to_string())?
             .filter_map(|e| e.ok())
+            .map(|entry| {
+                let is_dir = entry.path().is_dir();
+                (entry, is_dir)
+            })
             .collect();
 
         // Sort: directories first, then alphabetically
-        entries.sort_by(|a, b| {
-            let a_is_dir = a.path().is_dir();
-            let b_is_dir = b.path().is_dir();
+        entries.sort_by(|(a, a_is_dir), (b, b_is_dir)| {
             match (a_is_dir, b_is_dir) {
                 (true, false) => std::cmp::Ordering::Less,
                 (false, true) => std::cmp::Ordering::Greater,
@@ -54,7 +56,7 @@ fn build_tree_recursive(root: &Path, current: &Path) -> Result<FileTreeNode, Str
             }
         });
 
-        for entry in entries {
+        for (entry, is_dir) in entries {
             let entry_path = entry.path();
             let entry_name = entry.file_name().to_string_lossy().to_string();
 
@@ -63,7 +65,7 @@ fn build_tree_recursive(root: &Path, current: &Path) -> Result<FileTreeNode, Str
                 continue;
             }
 
-            if entry_path.is_dir() {
+            if is_dir {
                 if let Ok(child) = build_tree_recursive(root, &entry_path) {
                     children.push(child);
                 }

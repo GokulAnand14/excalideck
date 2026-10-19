@@ -6,6 +6,7 @@ interface FileTreeProps {
   node: FileTreeNode;
   activeFile: string | null;
   searchQuery?: string;
+  matchingPaths?: Set<string> | null;
   collapsedFolders: Set<string>;
   onToggleExpand: (path: string) => void;
   onFileSelect: (path: string) => void;
@@ -24,6 +25,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
   node,
   activeFile,
   searchQuery = "",
+  matchingPaths = null,
   collapsedFolders,
   onToggleExpand,
   onFileSelect,
@@ -46,19 +48,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
   }
 
   // If search query is active, filter node visibility
-  if (searchQuery.trim()) {
-    const q = searchQuery.toLowerCase();
-    const matchesNode = node.name.toLowerCase().includes(q);
-
-    const hasMatchingChild = (n: FileTreeNode): boolean => {
-      if (n.name.toLowerCase().includes(q)) return true;
-      return n.children?.some((c) => hasMatchingChild(c)) || false;
-    };
-
-    if (!matchesNode && !hasMatchingChild(node)) {
-      return null;
-    }
-  }
+  if (searchQuery.trim() && matchingPaths && !matchingPaths.has(node.path)) return null;
 
   // For root level, render children directly
   if (level === 0 && node.nodeType === "directory") {
@@ -71,6 +61,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
               node={child}
               activeFile={activeFile}
               searchQuery={searchQuery}
+              matchingPaths={matchingPaths}
               collapsedFolders={collapsedFolders}
               onToggleExpand={onToggleExpand}
               onFileSelect={onFileSelect}
@@ -125,6 +116,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
               node={child}
               activeFile={activeFile}
               searchQuery={searchQuery}
+              matchingPaths={matchingPaths}
               collapsedFolders={collapsedFolders}
               onToggleExpand={onToggleExpand}
               onFileSelect={onFileSelect}
