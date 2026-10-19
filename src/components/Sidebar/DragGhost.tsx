@@ -8,16 +8,17 @@ interface DragGhostProps {
   y: number;
 }
 
-export const DragGhost: React.FC<DragGhostProps> = ({
+export const DragGhost = React.forwardRef<HTMLDivElement, DragGhostProps>(({
   name,
   isFolder,
   x,
   y,
-}) => {
+}, ref) => {
   const cleanName = name.replace(".excalidraw", "");
 
   return (
     <div
+      ref={ref}
       className="drag-ghost"
       style={{
         transform: `translate3d(${x + 12}px, ${y + 12}px, 0)`,
@@ -27,4 +28,4 @@ export const DragGhost: React.FC<DragGhostProps> = ({
       <span>{cleanName}</span>
     </div>
   );
-};
+});

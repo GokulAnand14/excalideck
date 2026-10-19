@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { FileTree } from "./FileTree";
 import { FileTreeNode } from "../../types/fileTree";
 import { DragGhost } from "./DragGhost";
@@ -47,6 +47,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { promptDialog } = useDialog();
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  const matchingPaths = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query || !tree) return null;
+
+    const matches = new Set<string>();
+    const visit = (node: FileTreeNode): boolean => {
+      if (node.nodeType === "directory" &&
+        (node.name === ".excalideck" || node.name === "assets" || node.name.startsWith("."))) {
+        return false;
+      }
+      const selfMatches = node.name.toLowerCase().includes(query);
+      let childMatches = false;
+      for (const child of node.children || []) childMatches = visit(child) || childMatches;
+      if (selfMatches || childMatches) matches.add(node.path);
+      return selfMatches || childMatches;
+    };
+    visit(tree);
+    return matches;
+  }, [searchQuery, tree]);
 
   // Move Modal state
   const [moveModalItem, setMoveModalItem] = useState<{
@@ -97,8 +116,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     name: string;
   } | null>(null);
 
-  const [ghostPos, setGhostPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dropTargetFolder, setDropTargetFolder] = useState<string | null>(null);
+  const dragGhostRef = useRef<HTMLDivElement | null>(null);
 
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const pendingDragItemRef = useRef<{ path: string; isFolder: boolean; name: string } | null>(null);
@@ -133,7 +152,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }
 
       if (isDraggingRef.current) {
-        setGhostPos({ x: e.clientX, y: e.clientY });
+        if (dragGhostRef.current) {
+          dragGhostRef.current.style.transform = `translate3d(${e.clientX + 12}px, ${e.clientY + 12}px, 0)`;
+        }
 
         // Hit-test element under cursor
         const elemUnder = document.elementFromPoint(e.clientX, e.clientY);
@@ -343,6 +364,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 node={tree}
                 activeFile={activeFile}
                 searchQuery={searchQuery}
+                matchingPaths={matchingPaths}
                 collapsedFolders={collapsedFolders}
                 onToggleExpand={handleToggleExpand}
                 onFileSelect={handleSelectFile}
@@ -384,10 +406,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Floating Drag Ghost Badge */}
           {draggedItem && (
             <DragGhost
+              ref={dragGhostRef}
               name={draggedItem.name}
               isFolder={draggedItem.isFolder}
-              x={ghostPos.x}
-              y={ghostPos.y}
+              x={0}
+              y={0}
             />
           )}
 
