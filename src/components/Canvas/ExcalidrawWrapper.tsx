@@ -220,6 +220,7 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
         />
 
         <Excalidraw
+          key={fileName || "canvas"}
           excalidrawAPI={handleAPIMount}
           initialData={memoizedInitialData}
           theme={theme}

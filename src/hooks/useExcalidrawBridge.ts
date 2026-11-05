@@ -82,6 +82,14 @@ export const useExcalidrawBridge = () => {
         isSwitchingRef.current = true;
         cancel();
 
+        // Clear previous Excalidraw instance scene & store to prevent stale history retention
+        if (excalidrawAPIRef.current) {
+          try {
+            excalidrawAPIRef.current.resetScene();
+          } catch (_) {}
+          excalidrawAPIRef.current = null;
+        }
+
         // 3. Read new drawing from backend
         const data: DrawingData = await readDrawing(path);
 
@@ -104,8 +112,7 @@ export const useExcalidrawBridge = () => {
             ? Math.min(Math.max(rawZoom, 0.1), 3.0)
             : 1;
 
-        const currentTheme =
-          excalidrawAPIRef.current?.getAppState?.()?.theme || appState.theme || "dark";
+        const currentTheme = appState.theme || "dark";
 
         const cleanAppState: Record<string, any> = {
           ...appState,
@@ -122,31 +129,6 @@ export const useExcalidrawBridge = () => {
 
         // Always keep initialData updated in state so fresh mounts have the correct data
         setInitialData({ elements, appState: cleanAppState, files });
-
-        // 4. Update scene in-place if Excalidraw API is already mounted
-        if (excalidrawAPIRef.current) {
-          // CRITICAL: Feed binary files to Excalidraw's binary file cache first!
-          const fileValues = Object.values(files).filter(Boolean) as any[];
-          if (fileValues.length > 0) {
-            excalidrawAPIRef.current.addFiles(fileValues);
-          }
-
-          excalidrawAPIRef.current.updateScene({
-            elements,
-            appState: cleanAppState,
-            commitToHistory: false,
-          });
-          excalidrawAPIRef.current.history?.clear();
-
-          // If note has elements but no previous scroll coordinates, center it without zooming past 100%
-          if (hasElements && appState.scrollX === undefined && appState.scrollY === undefined) {
-            excalidrawAPIRef.current.scrollToContent(elements, {
-              fitToViewport: false,
-              maxZoom: 1,
-              animate: false,
-            });
-          }
-        }
       } catch (e) {
         console.error(`[useExcalidrawBridge] Failed to load drawing "${path}":`, e);
         cancel();
@@ -165,6 +147,7 @@ export const useExcalidrawBridge = () => {
   const closeFile = useCallback(async () => {
     await flush();
     cancel();
+    isSwitchingRef.current = true;
     setCurrentFile(null);
     currentFileRef.current = null;
     setInitialData(null);
@@ -177,6 +160,9 @@ export const useExcalidrawBridge = () => {
       }
       excalidrawAPIRef.current = null;
     }
+    setTimeout(() => {
+      isSwitchingRef.current = false;
+    }, 150);
   }, [flush, cancel]);
 
   const getExcalidrawAPI = useCallback(() => {

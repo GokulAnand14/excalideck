@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::path::PathBuf;
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
-use crate::files::io::{read_file, write_file_atomic};
+use crate::files::io::{read_file, write_file_atomic, backup_file_version};
 use crate::files::assets::{extract_assets, inject_assets};
 use crate::files::security::{resolve_vault_path, relative_to_vault, strip_verbatim_prefix};
 use std::fs;
@@ -45,6 +45,16 @@ pub fn save_drawing(path: String, content: String, state: State<'_, Mutex<AppSta
     
     let full_path = resolve_vault_path(&vault.path, &path)?;
     let processed_content = extract_assets(&vault.path, &content)?;
+
+    // Reliability: Safely snapshot the existing file before overwriting
+    if full_path.exists() {
+        if let Ok(existing) = fs::read_to_string(&full_path) {
+            if !existing.trim().is_empty() && existing != processed_content {
+                let _ = backup_file_version(&vault.path, &full_path, 25);
+            }
+        }
+    }
+
     write_file_atomic(&full_path, &processed_content)?;
     Ok(())
 }
@@ -100,10 +110,11 @@ pub fn delete_file(path: String, state: State<'_, Mutex<AppState>>) -> Result<()
         return Err("Cannot delete root vault directory via delete_file".to_string());
     }
 
-    if full_path.is_dir() {
-        fs::remove_dir_all(full_path).map_err(|e| e.to_string())?;
-    } else {
+    if full_path.is_file() {
+        let _ = backup_file_version(&vault.path, &full_path, 25);
         fs::remove_file(full_path).map_err(|e| e.to_string())?;
+    } else if full_path.is_dir() {
+        fs::remove_dir_all(full_path).map_err(|e| e.to_string())?;
     }
     Ok(())
 }
