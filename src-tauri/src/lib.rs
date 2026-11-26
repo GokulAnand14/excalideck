@@ -26,8 +26,9 @@ pub fn run() {
                 .ok();
             if let Some(dir) = config_dir {
                 let state_handle = app.state::<Mutex<AppState>>();
-                let mut state = state_handle.lock().unwrap();
-                state.set_config_dir(dir);
+                if let Ok(mut state) = state_handle.lock() {
+                    state.set_config_dir(dir);
+                };
             }
             
             // Explicitly set runtime window and taskbar icon on desktop
@@ -46,12 +47,15 @@ pub fn run() {
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+        builder = builder
+            .plugin(tauri_plugin_window_state::Builder::default().build())
+            .plugin(tauri_plugin_updater::Builder::new().build());
     }
 
     builder
         .invoke_handler(tauri::generate_handler![
             commands::platform_cmds::get_platform_info,
+            commands::platform_cmds::open_external_url,
             commands::vault_cmds::open_vault,
             commands::vault_cmds::create_vault,
             commands::vault_cmds::list_app_vaults,
@@ -61,6 +65,8 @@ pub fn run() {
             commands::vault_cmds::get_recent_vaults,
             commands::vault_cmds::close_vault,
             commands::vault_cmds::reveal_in_explorer,
+            commands::vault_cmds::get_workspace_state,
+            commands::vault_cmds::save_workspace_state,
             commands::file_cmds::read_drawing,
             commands::file_cmds::save_drawing,
             commands::file_cmds::create_drawing,

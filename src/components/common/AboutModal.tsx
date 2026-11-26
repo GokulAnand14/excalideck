@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { UpdateState } from "../../hooks/useUpdater";
+import { openExternalUrl } from "../../lib/tauri";
+import { formatBytes, formatReleaseDate, parseReleaseNotes } from "../../lib/releaseNotes";
 import {
   IconSparkles,
   IconRefresh,
@@ -42,25 +44,63 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   onInstallUpdate,
   onClose,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isDownloading) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isDownloading, onClose]);
+
+  const noteLines = useMemo(
+    () => parseReleaseNotes(updateState?.body),
+    [updateState?.body]
+  );
+  const releaseDate = useMemo(
+    () => formatReleaseDate(updateState?.date),
+    [updateState?.date]
+  );
+
   if (!isOpen) return null;
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  const handleExternalLink = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
+    e.preventDefault();
+    openExternalUrl(url).catch(() => {
+      window.open(url, "_blank", "noopener,noreferrer");
+    });
   };
 
-  const formatTime = (ts: number) => {
+  const formatCheckedAt = (ts: number) => {
     const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const now = new Date();
+    const isSameDay =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return isSameDay
+      ? `Last checked today at ${timeStr}`
+      : `Last checked ${d.toLocaleDateString()} at ${timeStr}`;
   };
+
+  const badgeLabel = updateState?.available
+    ? `v${updateState.version} Available`
+    : lastCheckedAt && !error
+    ? "Up to Date"
+    : "Desktop";
 
   return (
     <div className="about-modal-backdrop" onClick={!isDownloading ? onClose : undefined}>
-      <div className="about-modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
+      <div
+        className="about-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label="About Excalideck"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="about-modal-header">
           <div className="about-logo-wrapper">
             <img src="/logo.png" className="about-logo-img" alt="Excalideck" />
@@ -70,23 +110,23 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             <div className="about-version-badge">
               <span>Version {currentVersion}</span>
               <span className="about-dot">•</span>
-              <span className="about-tag">Latest Stable</span>
+              <span className={`about-tag ${updateState?.available ? "has-update" : ""}`}>
+                {badgeLabel}
+              </span>
             </div>
           </div>
           {!isDownloading && (
-            <button className="about-close-btn" onClick={onClose} title="Close">
+            <button className="about-close-btn" onClick={onClose} title="Close" aria-label="Close">
               ✕
             </button>
           )}
         </div>
 
-        {/* Body */}
         <div className="about-modal-body">
-          {/* Update Section */}
           <div className="about-update-section">
             <div className="about-update-header">
               <div className="about-update-title-wrap">
-                <IconSparkles size={16} className="about-sparkle-icon" />
+                <IconSparkles size={15} className="about-sparkle-icon" />
                 <span className="about-update-label">Software Updates</span>
               </div>
               <button
@@ -95,29 +135,45 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 disabled={isChecking || isDownloading}
                 title="Check GitHub for newer releases"
               >
-                <IconRefresh size={13} className={isChecking ? "spin-animation" : ""} />
+                <IconRefresh size={12} className={isChecking ? "spin-animation" : ""} />
                 <span>{isChecking ? "Checking..." : "Check for Updates"}</span>
               </button>
             </div>
 
-            {/* Status Feedback */}
             <div className="about-status-box">
               {isChecking && (
                 <div className="about-status-row checking">
                   <div className="about-spinner" />
-                  <span>Checking GitHub Releases for latest version...</span>
+                  <span>Checking for updates...</span>
                 </div>
               )}
 
               {!isChecking && updateState?.available && (
                 <div className="about-status-row update-available">
-                  <div className="about-status-icon">★</div>
                   <div className="about-update-details">
                     <div className="about-update-heading">
-                      Update Available: <strong>v{updateState.version}</strong>
+                      <span>
+                        Update Available: <strong>v{updateState.version}</strong>
+                      </span>
+                      {releaseDate && <span className="about-release-date">{releaseDate}</span>}
                     </div>
-                    {updateState.body && (
-                      <div className="about-changelog-preview">{updateState.body}</div>
+                    {noteLines.length > 0 && (
+                      <div className="about-changelog-preview">
+                        {noteLines.map((line, idx) => (
+                          <div
+                            key={idx}
+                            className={
+                              line.kind === "heading"
+                                ? "about-note-heading"
+                                : line.kind === "bullet"
+                                ? "about-note-bullet"
+                                : "about-note-text"
+                            }
+                          >
+                            {line.kind === "bullet" ? `• ${line.content}` : line.content}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -125,7 +181,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
               {!isChecking && !updateState && statusMessage && (
                 <div className="about-status-row up-to-date">
-                  <IconCheck size={14} className="text-emerald-500" />
+                  <IconCheck size={14} />
                   <span>{statusMessage}</span>
                 </div>
               )}
@@ -133,7 +189,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               {!isChecking && !updateState && !statusMessage && lastCheckedAt && (
                 <div className="about-status-row muted">
                   <IconClock size={13} />
-                  <span>Last checked today at {formatTime(lastCheckedAt)}</span>
+                  <span>{formatCheckedAt(lastCheckedAt)}</span>
                 </div>
               )}
 
@@ -145,19 +201,22 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               )}
             </div>
 
-            {/* Progress Bar during Download */}
             {isDownloading && (
               <div className="about-progress-wrap">
                 <div className="about-progress-header">
                   <span>
-                    {downloadProgress < 100 ? "Downloading installer..." : "Launching installer & updating..."}
+                    {downloadProgress < 100
+                      ? "Downloading update package..."
+                      : "Verifying & restarting Excalideck..."}
                   </span>
-                  <span className="about-progress-percent">{downloadProgress}%</span>
+                  <span className="about-progress-percent">
+                    {downloadTotal > 0 ? `${downloadProgress}%` : ""}
+                  </span>
                 </div>
                 <div className="about-progress-bar-bg">
                   <div
-                    className="about-progress-bar-fill"
-                    style={{ width: `${Math.max(downloadProgress, 4)}%` }}
+                    className={`about-progress-bar-fill ${downloadTotal === 0 ? "indeterminate" : ""}`}
+                    style={downloadTotal > 0 ? { width: `${Math.max(downloadProgress, 4)}%` } : undefined}
                   />
                 </div>
                 {downloadTotal > 0 && (
@@ -168,38 +227,41 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               </div>
             )}
 
-            {/* Update Action Button & Direct Download Fallback */}
             {updateState?.available && !isDownloading && (
               <div className="about-install-actions">
                 <button className="about-install-btn" onClick={onInstallUpdate}>
                   <IconSparkles size={14} />
-                  <span>Update to v{updateState.version} & Restart</span>
+                  <span>
+                    {updateState.mode === "native"
+                      ? `Update to v${updateState.version} & Restart`
+                      : updateState.fileName
+                      ? `Download ${updateState.fileName}`
+                      : `Download v${updateState.version}`}
+                  </span>
                 </button>
-                {updateState.downloadUrl && (
+                {updateState.releaseUrl && updateState.mode === "native" && (
                   <a
-                    href={updateState.downloadUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                    href={updateState.releaseUrl}
+                    onClick={(e) => handleExternalLink(e, updateState.releaseUrl!)}
                     className="about-manual-download-link"
                   >
-                    Direct Download ({updateState.fileName || "installer"}) ↗
+                    View Release Notes on GitHub ↗
                   </a>
                 )}
               </div>
             )}
           </div>
 
-
-          {/* Description & Useful Links */}
           <div className="about-description">
-            Excalideck pairs the freehand sketching power of Excalidraw with Obsidian-style local vault persistence, atomic saves, and a robust plugin ecosystem.
+            Excalideck pairs the freehand sketching power of Excalidraw with Obsidian-style local vault persistence and atomic saves.
           </div>
 
           <div className="about-links-row">
             <a
               href="https://github.com/GokulAnand14/excalideck"
-              target="_blank"
-              rel="noreferrer"
+              onClick={(e) =>
+                handleExternalLink(e, "https://github.com/GokulAnand14/excalideck")
+              }
               className="about-link"
             >
               GitHub Repository ↗
@@ -207,8 +269,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             <span className="about-link-sep">•</span>
             <a
               href="https://github.com/GokulAnand14/excalideck/releases"
-              target="_blank"
-              rel="noreferrer"
+              onClick={(e) =>
+                handleExternalLink(e, "https://github.com/GokulAnand14/excalideck/releases")
+              }
               className="about-link"
             >
               Release Notes ↗
@@ -216,8 +279,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             <span className="about-link-sep">•</span>
             <a
               href="https://github.com/GokulAnand14/excalideck/issues"
-              target="_blank"
-              rel="noreferrer"
+              onClick={(e) =>
+                handleExternalLink(e, "https://github.com/GokulAnand14/excalideck/issues")
+              }
               className="about-link"
             >
               Report Issue ↗
@@ -225,9 +289,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="about-modal-footer">
-          <button className="about-btn-done" onClick={onClose}>
+          <button className="about-btn-done" onClick={onClose} disabled={isDownloading}>
             Done
           </button>
         </div>

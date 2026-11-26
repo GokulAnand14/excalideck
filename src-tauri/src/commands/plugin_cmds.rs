@@ -11,14 +11,27 @@ use std::collections::HashMap;
 use crate::files::io::write_file_atomic;
 
 fn validate_plugin_id(id: &str) -> Result<(), String> {
-    if id.contains('/') || id.contains('\\') || id.contains("..") {
+    let trimmed = id.trim();
+    if trimmed.is_empty()
+        || trimmed == "."
+        || trimmed.contains('/')
+        || trimmed.contains('\\')
+        || trimmed.contains("..")
+        || trimmed.contains('\0')
+    {
         return Err("Invalid plugin ID".to_string());
     }
     Ok(())
 }
 
 fn validate_path_safe(path: &str) -> Result<(), String> {
-    if path.contains("..") {
+    let trimmed = path.trim();
+    if trimmed.is_empty()
+        || trimmed.starts_with('/')
+        || trimmed.starts_with('\\')
+        || trimmed.contains("..")
+        || trimmed.contains('\0')
+    {
         return Err("Path traversal not allowed".to_string());
     }
     Ok(())
@@ -50,7 +63,7 @@ fn write_storage(path: &std::path::Path, data: &HashMap<String, String>) -> Resu
 #[tauri::command]
 pub fn plugin_storage_get(plugin_id: String, key: String, state: State<'_, Mutex<AppState>>) -> Result<Option<String>, String> {
     validate_plugin_id(&plugin_id)?;
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     
     let path = get_storage_path(&vault.path, &plugin_id);
@@ -61,7 +74,7 @@ pub fn plugin_storage_get(plugin_id: String, key: String, state: State<'_, Mutex
 #[tauri::command]
 pub fn plugin_storage_set(plugin_id: String, key: String, value: String, state: State<'_, Mutex<AppState>>) -> Result<(), String> {
     validate_plugin_id(&plugin_id)?;
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     
     let path = get_storage_path(&vault.path, &plugin_id);
@@ -73,7 +86,7 @@ pub fn plugin_storage_set(plugin_id: String, key: String, value: String, state: 
 #[tauri::command]
 pub fn plugin_storage_delete(plugin_id: String, key: String, state: State<'_, Mutex<AppState>>) -> Result<(), String> {
     validate_plugin_id(&plugin_id)?;
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     
     let path = get_storage_path(&vault.path, &plugin_id);
@@ -87,7 +100,7 @@ pub fn plugin_storage_delete(plugin_id: String, key: String, state: State<'_, Mu
 #[tauri::command]
 pub fn plugin_storage_keys(plugin_id: String, state: State<'_, Mutex<AppState>>) -> Result<Vec<String>, String> {
     validate_plugin_id(&plugin_id)?;
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     
     let path = get_storage_path(&vault.path, &plugin_id);
@@ -117,7 +130,7 @@ pub struct CommunityPluginInfo {
 
 #[tauri::command]
 pub fn list_community_plugins(state: State<'_, Mutex<AppState>>) -> Result<Vec<CommunityPluginInfo>, String> {
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     
     let plugins_dir = vault.path.join(".excalideck").join("plugins");
@@ -146,7 +159,7 @@ pub fn read_plugin_file(plugin_id: String, relative_path: String, state: State<'
     validate_plugin_id(&plugin_id)?;
     validate_path_safe(&relative_path)?;
     
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     
     let plugin_dir = vault.path.join(".excalideck").join("plugins").join(&plugin_id);
@@ -173,7 +186,7 @@ pub fn install_community_plugin(
     validate_plugin_id(&plugin_id)?;
     validate_path_safe(&main_filename)?;
 
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
 
     let plugin_dir = vault.path.join(".excalideck").join("plugins").join(&plugin_id);
@@ -195,7 +208,7 @@ pub fn uninstall_community_plugin(
 ) -> Result<(), String> {
     validate_plugin_id(&plugin_id)?;
 
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
 
     let plugin_dir = vault.path.join(".excalideck").join("plugins").join(&plugin_id);

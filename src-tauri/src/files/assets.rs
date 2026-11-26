@@ -79,7 +79,12 @@ pub fn extract_assets(vault_path: &Path, content: &str) -> Result<String, String
                                     }
                                 }
                             }
-                            if fs::write(&asset_path, decoded).is_ok() {
+                            let written_ok = if asset_path.exists() {
+                                true
+                            } else {
+                                fs::write(&asset_path, decoded).is_ok()
+                            };
+                            if written_ok {
                                 let mime_str = get_mime_from_ext(ext).to_string();
                                 if let Some(map) = file_obj.as_object_mut() {
                                     map.insert("assetPath".to_string(), Value::String(asset_name));

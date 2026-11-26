@@ -24,6 +24,13 @@
   box-sizing: border-box;
 }
 
+.vault-picker-overlay.below-titlebar {
+  top: calc(38px + var(--sat)) !important;
+  height: calc(100vh - 38px - var(--sat)) !important;
+  height: calc(100dvh - 38px - var(--sat)) !important;
+  z-index: 90 !important;
+}
+
 .vault-picker-modal {
   background-color: var(--bg-card);
   border-radius: var(--radius-lg, 16px);

@@ -2,11 +2,12 @@ import React from 'react';
 import { Download, ExternalLink, Smartphone } from 'lucide-react';
 import { sound } from '../utils/sound';
 import { AppleIcon, WindowsIcon, LinuxIcon, AndroidIcon } from './Icons';
-import { DIRECT_DOWNLOADS } from '../utils/os';
+import { DIRECT_DOWNLOADS, RELEASE_VERSION } from '../utils/os';
 import { animate } from 'animejs';
 
 export const DownloadMatrix: React.FC = () => {
   const words = ["Download", "Excalideck."];
+  const cleanVer = RELEASE_VERSION.replace(/^v/, '');
 
   const handleLetterHover = (e: React.MouseEvent<HTMLSpanElement>, idx: number) => {
     animate(e.currentTarget, {
@@ -33,7 +34,7 @@ export const DownloadMatrix: React.FC = () => {
       <div className="text-center max-w-3xl mx-auto mb-14 relative">
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-mono font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 mb-3 shadow-xs">
           <Download className="w-3.5 h-3.5" />
-          <span>OFFICIAL DIRECT DOWNLOADS · V0.2.0</span>
+          <span>OFFICIAL DIRECT DOWNLOADS · {RELEASE_VERSION.toUpperCase()}</span>
         </div>
         
         <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-white flex flex-wrap items-center justify-center gap-x-3 gap-y-2 cursor-pointer">
@@ -89,7 +90,7 @@ export const DownloadMatrix: React.FC = () => {
             <div className="mt-6 space-y-2">
               <a
                 href={DIRECT_DOWNLOADS.mac.dmg}
-                download="Excalideck_0.2.0_universal.dmg"
+                download={`Excalideck_${cleanVer}_universal.dmg`}
                 onClick={() => sound.playSuccess()}
                 className="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95"
               >
@@ -109,7 +110,7 @@ export const DownloadMatrix: React.FC = () => {
 
           <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-400 flex items-center justify-between font-mono">
             <span>Signed Universal</span>
-            <span className="text-emerald-500 font-semibold">v0.2.0</span>
+            <span className="text-emerald-500 font-semibold">{RELEASE_VERSION}</span>
           </div>
         </div>
 
@@ -137,7 +138,7 @@ export const DownloadMatrix: React.FC = () => {
             <div className="mt-6 space-y-2">
               <a
                 href={DIRECT_DOWNLOADS.windows.exe}
-                download="Excalideck_0.2.0_x64-setup.exe"
+                download={`Excalideck_${cleanVer}_x64-setup.exe`}
                 onClick={() => sound.playSuccess()}
                 className="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95"
               >
@@ -146,7 +147,7 @@ export const DownloadMatrix: React.FC = () => {
               </a>
               <a
                 href={DIRECT_DOWNLOADS.windows.msi}
-                download="Excalideck_0.2.0_x64_en-US.msi"
+                download={`Excalideck_${cleanVer}_x64_en-US.msi`}
                 onClick={() => sound.playClick()}
                 className="w-full py-2 px-3 rounded-xl text-xs font-semibold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 flex items-center justify-center gap-2 transition-all active:scale-95"
               >
@@ -157,7 +158,7 @@ export const DownloadMatrix: React.FC = () => {
 
           <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-400 flex items-center justify-between font-mono">
             <span>WebView2 Native</span>
-            <span className="text-emerald-500 font-semibold">v0.2.0</span>
+            <span className="text-emerald-500 font-semibold">{RELEASE_VERSION}</span>
           </div>
         </div>
 
@@ -185,7 +186,7 @@ export const DownloadMatrix: React.FC = () => {
             <div className="mt-6 space-y-2">
               <a
                 href={DIRECT_DOWNLOADS.linux.appImage}
-                download="Excalideck_0.2.0_amd64.AppImage"
+                download={`Excalideck_${cleanVer}_amd64.AppImage`}
                 onClick={() => sound.playSuccess()}
                 className="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95"
               >
@@ -194,7 +195,7 @@ export const DownloadMatrix: React.FC = () => {
               </a>
               <a
                 href={DIRECT_DOWNLOADS.linux.deb}
-                download="Excalideck_0.2.0_amd64.deb"
+                download={`Excalideck_${cleanVer}_amd64.deb`}
                 onClick={() => sound.playClick()}
                 className="w-full py-2 px-3 rounded-xl text-xs font-semibold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 flex items-center justify-center gap-2 transition-all active:scale-95"
               >
@@ -205,7 +206,7 @@ export const DownloadMatrix: React.FC = () => {
 
           <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-400 flex items-center justify-between font-mono">
             <span>Standalone Binary</span>
-            <span className="text-emerald-500 font-semibold">v0.2.0</span>
+            <span className="text-emerald-500 font-semibold">{RELEASE_VERSION}</span>
           </div>
         </div>
 
@@ -233,7 +234,7 @@ export const DownloadMatrix: React.FC = () => {
             <div className="mt-6 space-y-2">
               <a
                 href={DIRECT_DOWNLOADS.android.apk}
-                download="Excalideck_0.2.0_universal.apk"
+                download={`Excalideck_${cleanVer}_universal.apk`}
                 onClick={() => sound.playSuccess()}
                 className="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95"
               >
@@ -242,7 +243,7 @@ export const DownloadMatrix: React.FC = () => {
               </a>
               <a
                 href={DIRECT_DOWNLOADS.android.localDevApk}
-                download="Excalideck_0.2.0_universal.apk"
+                download={`Excalideck_${cleanVer}_universal.apk`}
                 onClick={() => sound.playClick()}
                 className="w-full py-2 px-3 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center gap-1.5 transition-all active:scale-95"
                 title="Direct high-speed local network install if on same Wi-Fi"
@@ -255,7 +256,7 @@ export const DownloadMatrix: React.FC = () => {
 
           <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-400 flex items-center justify-between font-mono">
             <span>Sandboxed Storage</span>
-            <span className="text-emerald-500 font-semibold">v0.2.0</span>
+            <span className="text-emerald-500 font-semibold">{RELEASE_VERSION}</span>
           </div>
         </div>
 

@@ -1,15 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getAppConfig, setAppConfig } from "../lib/tauri";
 
 const getInitialTheme = (): "light" | "dark" => {
   if (typeof window !== "undefined") {
-    const userChosen = localStorage.getItem("theme_user_chosen");
-    if (userChosen === "true") {
-      const saved = localStorage.getItem("theme");
-      if (saved === "dark" || saved === "light") return saved;
-    }
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark" || saved === "light") return saved;
   }
-  return "dark"; // Always default to dark mode
+  return "dark";
 };
 
 export const useTheme = () => {
@@ -18,40 +15,39 @@ export const useTheme = () => {
   useEffect(() => {
     const initial = getInitialTheme();
     document.documentElement.setAttribute("data-theme", initial);
-    localStorage.setItem("theme", initial);
 
-    getAppConfig().then(config => {
-      const userChosen = localStorage.getItem("theme_user_chosen");
-      if (userChosen === "true" && config.theme === "light") {
-        setTheme("light");
-        document.documentElement.setAttribute("data-theme", "light");
-        localStorage.setItem("theme", "light");
-      } else {
-        setTheme("dark");
-        document.documentElement.setAttribute("data-theme", "dark");
-        localStorage.setItem("theme", "dark");
-        if (config.theme !== "dark") {
-          setAppConfig({ ...config, theme: "dark" }).catch(() => {});
-        }
-      }
-    }).catch(() => {
-      setTheme("dark");
-      document.documentElement.setAttribute("data-theme", "dark");
-      localStorage.setItem("theme", "dark");
-    });
+    getAppConfig()
+      .then((config) => {
+        const persisted = config.theme === "light" || config.theme === "dark" ? config.theme : "dark";
+        setTheme(persisted);
+        document.documentElement.setAttribute("data-theme", persisted);
+        localStorage.setItem("theme", persisted);
+      })
+      .catch(() => {
+        document.documentElement.setAttribute("data-theme", initial);
+      });
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
+  const setThemeValue = useCallback((newTheme: "light" | "dark") => {
     setTheme(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     localStorage.setItem("theme", newTheme);
-    localStorage.setItem("theme_user_chosen", "true");
-    getAppConfig().then(config => {
-      setAppConfig({ ...config, theme: newTheme });
-    }).catch(() => {});
-  };
+    getAppConfig()
+      .then((config) => setAppConfig({ ...config, theme: newTheme }))
+      .catch(() => {});
+  }, []);
 
-  return { theme, toggleTheme };
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const newTheme = prev === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", newTheme);
+      localStorage.setItem("theme", newTheme);
+      getAppConfig()
+        .then((config) => setAppConfig({ ...config, theme: newTheme }))
+        .catch(() => {});
+      return newTheme;
+    });
+  }, []);
+
+  return { theme, toggleTheme, setTheme: setThemeValue };
 };
-

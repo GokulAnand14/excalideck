@@ -1,7 +1,51 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fs;
 use directories::ProjectDirs;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ViewportState {
+    pub scroll_x: f64,
+    pub scroll_y: f64,
+    pub zoom: f64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceState {
+    #[serde(default)]
+    pub active_file: Option<String>,
+    #[serde(default)]
+    pub viewports: HashMap<String, ViewportState>,
+    #[serde(default = "default_sidebar_open")]
+    pub sidebar_open: bool,
+    #[serde(default = "default_sidebar_width")]
+    pub sidebar_width: u32,
+    #[serde(default)]
+    pub collapsed_folders: Vec<String>,
+}
+
+fn default_sidebar_open() -> bool {
+    true
+}
+
+fn default_sidebar_width() -> u32 {
+    260
+}
+
+impl Default for WorkspaceState {
+    fn default() -> Self {
+        Self {
+            active_file: None,
+            viewports: HashMap::new(),
+            sidebar_open: default_sidebar_open(),
+            sidebar_width: default_sidebar_width(),
+            collapsed_folders: Vec::new(),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

@@ -145,6 +145,12 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
   const formatLastOpened = (timestamp: number) => {
     if (!timestamp) return "";
     const date = new Date(timestamp * 1000);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    const diffDays = Math.round((startOfToday - startOfDate) / 86400000);
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
     return date.toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
@@ -179,7 +185,10 @@ export const VaultPicker: React.FC<VaultPickerProps> = ({
 
   return (
     <div
-      className="vault-picker-overlay"
+      className={`vault-picker-overlay ${!activeVaultPath ? "below-titlebar" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Select Vault"
       onClick={() => {
         if (onClose && activeVaultPath) onClose();
       }}

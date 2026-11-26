@@ -1,5 +1,6 @@
 import React from "react";
 import { IconFileDrawing, IconFolder } from "../common/Icons";
+import { stripDrawingExtension } from "../../lib/constants";
 
 interface DragGhostProps {
   name: string;
@@ -14,7 +15,7 @@ export const DragGhost = React.forwardRef<HTMLDivElement, DragGhostProps>(({
   x,
   y,
 }, ref) => {
-  const cleanName = name.replace(".excalidraw", "");
+  const cleanName = isFolder ? name : stripDrawingExtension(name);
 
   return (
     <div

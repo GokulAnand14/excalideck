@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FileTreeNode } from "../../types/fileTree";
 import { ContextMenu, ContextMenuItem } from "../common/ContextMenu";
 import { useDialog } from "../../context/DialogContext";
+import { stripDrawingExtension } from "../../lib/constants";
 import {
   IconChevronDown,
   IconChevronRight,
@@ -176,7 +177,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
       label: "Rename",
       icon: <IconTag size={14} />,
       onClick: async () => {
-        const currentCleanName = node.name.replace(".excalidraw", "");
+        const currentCleanName = isFolder ? node.name : stripDrawingExtension(node.name);
         const newName = await promptDialog({
           title: isFolder ? "Rename Folder" : "Rename Drawing",
           placeholder: currentCleanName,
@@ -185,7 +186,12 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
           icon: <IconTag size={16} />,
         });
         if (newName && newName !== currentCleanName) {
-          const finalName = isFolder ? newName : `${newName}.excalidraw`;
+          const ext = node.name.endsWith(".excalidrawlib") ? ".excalidrawlib" : ".excalidraw";
+          const finalName = isFolder
+            ? newName
+            : newName.endsWith(ext)
+            ? newName
+            : `${newName}${ext}`;
           onRenameFile(node.path, finalName);
         }
       },
@@ -209,9 +215,7 @@ export const FileTreeItem: React.FC<FileTreeItemProps> = ({
     }
   );
 
-  const displayName = isFolder
-    ? node.name
-    : node.name.replace(".excalidraw", "");
+  const displayName = isFolder ? node.name : stripDrawingExtension(node.name);
 
   return (
     <>

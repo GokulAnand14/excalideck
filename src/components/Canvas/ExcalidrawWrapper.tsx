@@ -5,20 +5,17 @@ import { IconNewFile } from "../common/Icons";
 import { CanvasToolsDock } from "../../tools/CanvasToolsDock";
 import { CalendarModal } from "../../tools/calendar/CalendarModal";
 import { generateCalendar } from "../../tools/calendar/generator";
+import { ExcalidrawInitialData } from "../../hooks/useExcalidrawBridge";
 import "@excalidraw/excalidraw/index.css";
 import "../../tools/tools.css";
 import "./Canvas.css";
 
-interface InitialData {
-  elements: any[];
-  appState: Record<string, any>;
-  files: Record<string, any>;
-}
-
 interface ExcalidrawWrapperProps {
-  initialData: InitialData | null;
+  initialData: ExcalidrawInitialData | null;
   theme: "light" | "dark";
+  onThemeChange?: (nextTheme: "light" | "dark") => void;
   onChange: (elements: readonly any[], appState: any, files: any) => void;
+  onScrollChange?: (scrollX: number, scrollY: number, zoom: number) => void;
   fileName: string | null;
   onCreateDrawing?: (name: string) => void;
   onAPIMount?: (api: any) => void;
@@ -27,7 +24,9 @@ interface ExcalidrawWrapperProps {
 export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
   initialData,
   theme,
+  onThemeChange,
   onChange,
+  onScrollChange,
   fileName,
   onCreateDrawing,
   onAPIMount,
@@ -35,6 +34,8 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
   const { promptDialog } = useDialog();
   const excalidrawAPIRef = useRef<any>(null);
   const prevThemeRef = useRef(theme);
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   const initialDataRef = useRef(initialData);
   initialDataRef.current = initialData;
@@ -42,7 +43,9 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
   const onAPIMountRef = useRef(onAPIMount);
   onAPIMountRef.current = onAPIMount;
 
-  // Calendar Tool State
+  const onThemeChangeRef = useRef(onThemeChange);
+  onThemeChangeRef.current = onThemeChange;
+
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const handleQuickCreate = async () => {
@@ -93,8 +96,8 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
     const zoom = appState.zoom?.value ?? appState.zoom ?? 1;
     const scrollX = appState.scrollX ?? 0;
     const scrollY = appState.scrollY ?? 0;
-    const width = window.innerWidth || 1200;
-    const height = window.innerHeight || 800;
+    const width = appState.width || window.innerWidth || 1200;
+    const height = appState.height || window.innerHeight || 800;
     return {
       x: Math.round(-scrollX + width / 2 / zoom),
       y: Math.round(-scrollY + height / 2 / zoom),
@@ -108,14 +111,18 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
     [onChange]
   );
 
-  // Insert Calendar onto Board
+  const handleInternalScrollChange = useCallback(
+    (scrollX: number, scrollY: number, zoom: { value: number }) => {
+      onScrollChange?.(scrollX, scrollY, zoom?.value ?? 1);
+    },
+    [onScrollChange]
+  );
+
   const handleInsertCalendar = (year: number, month: number) => {
     const api = excalidrawAPIRef.current;
     if (!api) return;
 
     const { x, y } = getViewportCenter();
-
-    // Default to clean solid white background for maximum readability across all canvas modes
     const elements = generateCalendar({
       year,
       month,
@@ -143,19 +150,21 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
       elements: initialData.elements,
       appState: {
         ...initialData.appState,
-        theme,
+        theme: themeRef.current,
         zoom: initialData.appState?.zoom?.value
           ? initialData.appState.zoom
           : { value: 1 },
       },
       files: initialData.files,
-      scrollToContent: Boolean(
-        initialData.elements &&
-          initialData.elements.length > 0 &&
-          initialData.appState?.scrollX === undefined
-      ),
+      scrollToContent:
+        !initialData.hasSavedViewport &&
+        Boolean(
+          initialData.elements &&
+            initialData.elements.length > 0 &&
+            initialData.appState?.scrollX === undefined
+        ),
     };
-  }, [initialData, theme]);
+  }, [initialData]);
 
   const excalidrawChildren = useMemo(
     () => (
@@ -164,7 +173,13 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
           <MainMenu.DefaultItems.SaveAsImage />
           <MainMenu.DefaultItems.Export />
           <MainMenu.DefaultItems.ClearCanvas />
-          <MainMenu.DefaultItems.ToggleTheme />
+          <MainMenu.DefaultItems.ToggleTheme
+            onSelect={(nextTheme) => {
+              if (nextTheme === "light" || nextTheme === "dark") {
+                onThemeChangeRef.current?.(nextTheme);
+              }
+            }}
+          />
           <MainMenu.DefaultItems.ChangeCanvasBackground />
         </MainMenu>
         <WelcomeScreen>
@@ -214,10 +229,7 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
   return (
     <div className="canvas-wrapper-root">
       <div className="canvas-container">
-        {/* Sleek Floating Canvas Tools Dock */}
-        <CanvasToolsDock
-          onOpenCalendar={() => setIsCalendarOpen(true)}
-        />
+        <CanvasToolsDock onOpenCalendar={() => setIsCalendarOpen(true)} />
 
         <Excalidraw
           key={fileName || "canvas"}
@@ -225,12 +237,12 @@ export const ExcalidrawWrapper: React.FC<ExcalidrawWrapperProps> = ({
           initialData={memoizedInitialData}
           theme={theme}
           onChange={handleInternalChange}
+          onScrollChange={handleInternalScrollChange}
         >
           {excalidrawChildren}
         </Excalidraw>
       </div>
 
-      {/* Calendar Picker Popover */}
       <CalendarModal
         isOpen={isCalendarOpen}
         onClose={() => setIsCalendarOpen(false)}

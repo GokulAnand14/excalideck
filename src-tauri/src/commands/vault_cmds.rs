@@ -3,7 +3,9 @@ use std::sync::Mutex;
 use std::path::PathBuf;
 use crate::state::AppState;
 use crate::vault::manager::{Vault, VaultInfo};
-use crate::config::RecentVault;
+use crate::config::{RecentVault, WorkspaceState};
+use crate::files::io::write_file_atomic;
+use crate::files::security::strip_verbatim_prefix;
 use crate::files::watcher::start_watcher;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -58,7 +60,7 @@ pub fn open_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri::A
     let vault = Vault::new(clean_path.clone());
     let info = vault.get_info();
     
-    let mut state_guard = state.lock().unwrap();
+    let mut state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     state_guard.ensure_config_dir(&app);
     // Cleanly unbind prior watcher before attaching new vault watcher
     state_guard.watcher_handle = None;
@@ -68,7 +70,10 @@ pub fn open_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri::A
         state_guard.watcher_handle = Some(watcher);
     }
     
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
     
     let rv = RecentVault {
         name: info.name.clone(),
@@ -179,7 +184,7 @@ pub fn delete_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri:
     }
 
     {
-        let mut state_guard = state.lock().unwrap();
+        let mut state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
         state_guard.ensure_config_dir(&app);
         if let Some(ref v) = state_guard.vault {
             if v.path == path_buf || v.path == canonical {
@@ -197,7 +202,7 @@ pub fn delete_vault(path: String, state: State<'_, Mutex<AppState>>, app: tauri:
 
 #[tauri::command]
 pub fn get_recent_vaults(state: State<'_, Mutex<AppState>>, app: tauri::AppHandle) -> Result<Vec<RecentVault>, String> {
-    let mut state_guard = state.lock().unwrap();
+    let mut state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     state_guard.ensure_config_dir(&app);
 
     // Prune stale entries: path must exist and contain the .excalideck marker.
@@ -223,9 +228,35 @@ pub fn get_recent_vaults(state: State<'_, Mutex<AppState>>, app: tauri::AppHandl
 
 #[tauri::command]
 pub fn close_vault(state: State<'_, Mutex<AppState>>) -> Result<(), String> {
-    let mut state_guard = state.lock().unwrap();
+    let mut state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     state_guard.watcher_handle = None;
     state_guard.vault = None;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_workspace_state(state: State<'_, Mutex<AppState>>) -> Result<WorkspaceState, String> {
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
+    let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
+    let workspace_path = vault.path.join(".excalideck").join("workspace.json");
+    if !workspace_path.exists() {
+        return Ok(WorkspaceState::default());
+    }
+    match std::fs::read_to_string(&workspace_path) {
+        Ok(content) => Ok(serde_json::from_str(&content).unwrap_or_default()),
+        Err(_) => Ok(WorkspaceState::default()),
+    }
+}
+
+#[tauri::command]
+pub fn save_workspace_state(workspace: WorkspaceState, state: State<'_, Mutex<AppState>>) -> Result<(), String> {
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
+    let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
+    let excalideck_dir = vault.path.join(".excalideck");
+    std::fs::create_dir_all(&excalideck_dir).map_err(|e| e.to_string())?;
+    let workspace_path = excalideck_dir.join("workspace.json");
+    let content = serde_json::to_string_pretty(&workspace).map_err(|e| e.to_string())?;
+    write_file_atomic(&workspace_path, &content)?;
     Ok(())
 }
 
@@ -235,25 +266,26 @@ pub fn reveal_in_explorer(path: String) -> Result<(), String> {
     if !p.exists() {
         return Err("Path does not exist".to_string());
     }
+    let clean = strip_verbatim_prefix(&p.canonicalize().unwrap_or(p));
 
     #[cfg(target_os = "windows")]
     {
         std::process::Command::new("explorer")
-            .arg(&path)
+            .arg(&clean)
             .spawn()
             .map_err(|e| e.to_string())?;
     }
     #[cfg(target_os = "macos")]
     {
         std::process::Command::new("open")
-            .arg(&path)
+            .arg(&clean)
             .spawn()
             .map_err(|e| e.to_string())?;
     }
     #[cfg(target_os = "linux")]
     {
         std::process::Command::new("xdg-open")
-            .arg(&path)
+            .arg(&clean)
             .spawn()
             .map_err(|e| e.to_string())?;
     }

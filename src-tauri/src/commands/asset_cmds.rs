@@ -22,7 +22,7 @@ fn safe_extension_from_mime(mime: &str) -> &str {
 #[allow(non_snake_case)]
 pub fn save_asset(id: String, data: String, mimeType: String, state: State<'_, Mutex<AppState>>) -> Result<String, String> {
     validate_asset_id(&id)?;
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     let assets_dir = vault.path.join("assets");
     fs::create_dir_all(&assets_dir).map_err(|e| e.to_string())?;
@@ -49,7 +49,7 @@ pub fn save_asset(id: String, data: String, mimeType: String, state: State<'_, M
 #[tauri::command]
 pub fn get_asset_path(id: String, state: State<'_, Mutex<AppState>>) -> Result<Option<String>, String> {
     validate_asset_id(&id)?;
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
     let dirs = [vault.path.join("assets"), vault.path.join(".excalideck").join("assets")];
     

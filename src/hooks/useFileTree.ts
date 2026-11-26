@@ -3,7 +3,10 @@ import { FileTreeNode } from "../types/fileTree";
 import { getFileTree, createDrawing, createFolder, deleteFile, renameFile, moveFile } from "../lib/tauri";
 import { useFileWatcher } from "./useFileWatcher";
 
-export const useFileTree = (activeVaultPath?: string | null) => {
+export const useFileTree = (
+  activeVaultPath?: string | null,
+  onError?: (message: string) => void
+) => {
   const [tree, setTree] = useState<FileTreeNode | null>(null);
 
   const fetchTree = useCallback(async () => {
@@ -14,17 +17,17 @@ export const useFileTree = (activeVaultPath?: string | null) => {
     try {
       const fileTree = await getFileTree();
       setTree(fileTree);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to fetch tree:", e);
       setTree(null);
+      onError?.(`Failed to load files: ${e?.message || e || "Unknown error"}`);
     }
-  }, [activeVaultPath]);
+  }, [activeVaultPath, onError]);
 
   useEffect(() => {
     fetchTree();
   }, [fetchTree]);
 
-  // Hook into file watcher with stable callback
   useFileWatcher(fetchTree, !!activeVaultPath);
 
   const handleCreateDrawing = async (name: string, folder?: string) => {
@@ -32,8 +35,9 @@ export const useFileTree = (activeVaultPath?: string | null) => {
       const relPath = await createDrawing(name, folder);
       await fetchTree();
       return relPath;
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to create drawing", e);
+      onError?.(typeof e === "string" ? e : e?.message || "Failed to create drawing");
       return null;
     }
   };
@@ -42,8 +46,11 @@ export const useFileTree = (activeVaultPath?: string | null) => {
     try {
       await createFolder(path);
       await fetchTree();
-    } catch (e) {
+      return true;
+    } catch (e: any) {
       console.error("Failed to create folder", e);
+      onError?.(typeof e === "string" ? e : e?.message || "Failed to create folder");
+      return false;
     }
   };
 
@@ -51,8 +58,11 @@ export const useFileTree = (activeVaultPath?: string | null) => {
     try {
       await deleteFile(path);
       await fetchTree();
-    } catch (e) {
+      return true;
+    } catch (e: any) {
       console.error("Failed to delete file", e);
+      onError?.(typeof e === "string" ? e : e?.message || "Failed to delete item");
+      return false;
     }
   };
 
@@ -61,8 +71,9 @@ export const useFileTree = (activeVaultPath?: string | null) => {
       const newPath = await renameFile(oldPath, newName);
       await fetchTree();
       return newPath;
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to rename file", e);
+      onError?.(typeof e === "string" ? e : e?.message || "Failed to rename item");
       return null;
     }
   };
@@ -72,8 +83,9 @@ export const useFileTree = (activeVaultPath?: string | null) => {
       const newPath = await moveFile(src, destFolder);
       await fetchTree();
       return newPath;
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to move file", e);
+      onError?.(typeof e === "string" ? e : e?.message || "Failed to move item");
       return null;
     }
   };

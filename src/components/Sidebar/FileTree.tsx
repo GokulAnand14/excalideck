@@ -86,7 +86,8 @@ export const FileTree: React.FC<FileTreeProps> = ({
   }
 
   const isFolder = node.nodeType === "directory";
-  const isExpanded = isFolder && !collapsedFolders.has(node.path);
+  const isSearching = Boolean(searchQuery.trim());
+  const isExpanded = isFolder && (isSearching || !collapsedFolders.has(node.path));
   const isDraggingThis = draggedItem?.path === node.path;
   const isDropTargetThis = dropTargetFolder === node.path;
 

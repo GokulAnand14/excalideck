@@ -5,6 +5,7 @@ import { DragGhost } from "./DragGhost";
 import { MoveModal } from "./MoveModal";
 import { useDialog } from "../../context/DialogContext";
 import { usePlatform } from "../../hooks/usePlatform";
+import { APP_VERSION_FALLBACK, DEFAULT_SIDEBAR_WIDTH } from "../../lib/constants";
 import {
   IconNewFile,
   IconNewFolder,
@@ -16,6 +17,10 @@ interface SidebarProps {
   tree: FileTreeNode | null;
   activeFile: string | null;
   vaultName?: string | null;
+  sidebarWidth?: number;
+  collapsedFolders?: string[];
+  onSidebarWidthChange?: (width: number, immediate?: boolean) => void;
+  onCollapsedFoldersChange?: (folders: string[]) => void;
   onFileSelect: (path: string) => void;
   onCreateDrawing: (name: string, folder?: string) => void;
   onCreateFolder: (path: string) => void;
@@ -32,6 +37,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   tree,
   activeFile,
   vaultName,
+  sidebarWidth: persistedWidth = DEFAULT_SIDEBAR_WIDTH,
+  collapsedFolders: persistedCollapsed = [],
+  onSidebarWidthChange,
+  onCollapsedFoldersChange,
   onFileSelect,
   onCreateDrawing,
   onCreateFolder,
@@ -46,15 +55,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { isDesktop, isMobile } = usePlatform();
   const { promptDialog } = useDialog();
   const [searchQuery, setSearchQuery] = useState("");
-  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  const collapsedFolders = useMemo(
+    () => new Set(persistedCollapsed),
+    [persistedCollapsed]
+  );
+
   const matchingPaths = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query || !tree) return null;
 
     const matches = new Set<string>();
     const visit = (node: FileTreeNode): boolean => {
-      if (node.nodeType === "directory" &&
-        (node.name === ".excalideck" || node.name === "assets" || node.name.startsWith("."))) {
+      if (
+        node.nodeType === "directory" &&
+        (node.name === ".excalideck" || node.name === "assets" || node.name.startsWith("."))
+      ) {
         return false;
       }
       const selfMatches = node.name.toLowerCase().includes(query);
@@ -67,23 +82,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return matches;
   }, [searchQuery, tree]);
 
-  // Move Modal state
   const [moveModalItem, setMoveModalItem] = useState<{
     path: string;
     isFolder: boolean;
   } | null>(null);
 
   // Resize State
-  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [sidebarWidth, setSidebarWidth] = useState(persistedWidth);
+  const latestWidthRef = useRef(persistedWidth);
   const isResizingRef = useRef(false);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
+  const onSidebarWidthChangeRef = useRef(onSidebarWidthChange);
+  onSidebarWidthChangeRef.current = onSidebarWidthChange;
+
+  useEffect(() => {
+    setSidebarWidth(persistedWidth);
+    latestWidthRef.current = persistedWidth;
+  }, [persistedWidth]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizingRef.current) return;
       const dx = e.clientX - startXRef.current;
       const newWidth = Math.max(200, Math.min(600, startWidthRef.current + dx));
+      latestWidthRef.current = newWidth;
       setSidebarWidth(newWidth);
     };
     const handleMouseUp = () => {
@@ -91,6 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         isResizingRef.current = false;
         document.body.style.cursor = "default";
         document.body.style.userSelect = "auto";
+        onSidebarWidthChangeRef.current?.(latestWidthRef.current, true);
       }
     };
     window.addEventListener("mousemove", handleMouseMove);
@@ -125,11 +149,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const dropTargetRef = useRef<string | null>(null);
   const sidebarContentRef = useRef<HTMLDivElement | null>(null);
 
-  const handleItemPointerDown = (
-    e: React.PointerEvent,
-    node: FileTreeNode
-  ) => {
+  const collapsedFoldersRef = useRef(collapsedFolders);
+  collapsedFoldersRef.current = collapsedFolders;
+  const onMoveFileRef = useRef(onMoveFile);
+  onMoveFileRef.current = onMoveFile;
+  const onCollapsedFoldersChangeRef = useRef(onCollapsedFoldersChange);
+  onCollapsedFoldersChangeRef.current = onCollapsedFoldersChange;
+
+  const handleItemPointerDown = (e: React.PointerEvent, node: FileTreeNode) => {
     if (e.button !== 0) return;
+    if ((e.target as HTMLElement | null)?.closest("button")) return;
     dragStartPosRef.current = { x: e.clientX, y: e.clientY };
     pendingDragItemRef.current = {
       path: node.path,
@@ -139,6 +168,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   useEffect(() => {
+    const clearDragState = () => {
+      dragStartPosRef.current = null;
+      pendingDragItemRef.current = null;
+      isDraggingRef.current = false;
+      dropTargetRef.current = null;
+      setDraggedItem(null);
+      setDropTargetFolder(null);
+    };
+
     const handlePointerMove = (e: PointerEvent) => {
       if (!dragStartPosRef.current || !pendingDragItemRef.current) return;
 
@@ -156,7 +194,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           dragGhostRef.current.style.transform = `translate3d(${e.clientX + 12}px, ${e.clientY + 12}px, 0)`;
         }
 
-        // Hit-test element under cursor
         const elemUnder = document.elementFromPoint(e.clientX, e.clientY);
         const itemRow = elemUnder?.closest("[data-node-path]");
 
@@ -194,44 +231,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
         const isDescendant = isSrcFolder && destFolder.startsWith(srcPath + "/");
 
         if (!isSelf && !isDescendant) {
-          onMoveFile(srcPath, destFolder);
+          onMoveFileRef.current(srcPath, destFolder);
 
-          if (destFolder && collapsedFolders.has(destFolder)) {
-            setCollapsedFolders((prev) => {
-              const next = new Set(prev);
-              next.delete(destFolder);
-              return next;
-            });
+          if (destFolder && collapsedFoldersRef.current.has(destFolder)) {
+            const next = new Set(collapsedFoldersRef.current);
+            next.delete(destFolder);
+            onCollapsedFoldersChangeRef.current?.(Array.from(next));
           }
         }
       }
+      clearDragState();
+    };
 
-      dragStartPosRef.current = null;
-      pendingDragItemRef.current = null;
-      isDraggingRef.current = false;
-      dropTargetRef.current = null;
-      setDraggedItem(null);
-      setDropTargetFolder(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isDraggingRef.current) {
+        clearDragState();
+      }
     };
 
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", clearDragState);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", clearDragState);
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [collapsedFolders, onMoveFile]);
+  }, []);
 
   const handleToggleExpand = (folderPath: string) => {
-    setCollapsedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(folderPath)) {
-        next.delete(folderPath);
-      } else {
-        next.add(folderPath);
-      }
-      return next;
-    });
+    const next = new Set(collapsedFolders);
+    if (next.has(folderPath)) {
+      next.delete(folderPath);
+    } else {
+      next.add(folderPath);
+    }
+    onCollapsedFoldersChange?.(Array.from(next));
   };
 
   const handleNewFile = async () => {
@@ -284,14 +321,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
       <div className={`sidebar-layout ${isMobile ? "is-mobile" : ""}`}>
         <aside className="sidebar" style={{ width: isMobile ? undefined : sidebarWidth }}>
-          {/* Header */}
           <div className="sidebar-header">
             <div
               className={`sidebar-vault-info ${onOpenVaultPicker ? "clickable" : ""}`}
               onClick={onOpenVaultPicker}
               role={onOpenVaultPicker ? "button" : undefined}
               tabIndex={onOpenVaultPicker ? 0 : undefined}
-              title={onOpenVaultPicker ? `Vault: ${vaultName || "Vault"} • Click to switch` : (vaultName || "Vault")}
+              title={
+                onOpenVaultPicker
+                  ? `Vault: ${vaultName || "Vault"} • Click to switch`
+                  : vaultName || "Vault"
+              }
               onKeyDown={(e) => {
                 if (onOpenVaultPicker && (e.key === "Enter" || e.key === " ")) {
                   e.preventDefault();
@@ -311,6 +351,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="sidebar-action-btn"
                 onClick={handleNewFile}
                 title="New Drawing (in root)"
+                aria-label="New Drawing"
               >
                 <IconNewFile size={15} />
               </button>
@@ -318,6 +359,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="sidebar-action-btn"
                 onClick={handleNewFolder}
                 title="New Folder (in root)"
+                aria-label="New Folder"
               >
                 <IconNewFolder size={15} />
               </button>
@@ -334,7 +376,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* Search Input */}
           <div className="sidebar-search">
             <IconSearch size={13} className="sidebar-search-icon" />
             <input
@@ -342,19 +383,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
               placeholder="Filter drawings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && searchQuery) {
+                  setSearchQuery("");
+                }
+              }}
               className="sidebar-search-input"
             />
             {searchQuery && (
               <button
                 className="sidebar-search-clear"
                 onClick={() => setSearchQuery("")}
+                aria-label="Clear filter"
               >
                 ×
               </button>
             )}
           </div>
 
-          {/* File Tree & Root Drop Zone */}
           <div
             ref={sidebarContentRef}
             className={`sidebar-content ${dropTargetFolder === "" ? "is-root-drop-target" : ""}`}
@@ -389,21 +435,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* Footer */}
           <div className="sidebar-footer">
             <span className="sidebar-stats">
               {totalDrawings} {totalDrawings === 1 ? "drawing" : "drawings"}
             </span>
-            <span
+            <button
+              type="button"
               className="sidebar-version"
               onClick={onOpenAbout}
-              title={currentVersion ? `Excalideck v${currentVersion}` : "Excalideck"}
+              title={
+                currentVersion
+                  ? `Excalideck v${currentVersion} • About & Updates`
+                  : "About & Updates"
+              }
             >
-              v{currentVersion || "0.2.1"}
-            </span>
+              v{currentVersion || APP_VERSION_FALLBACK}
+            </button>
           </div>
 
-          {/* Floating Drag Ghost Badge */}
           {draggedItem && (
             <DragGhost
               ref={dragGhostRef}
@@ -414,7 +463,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
           )}
 
-          {/* Move to Folder Modal */}
           {moveModalItem && (
             <MoveModal
               itemPath={moveModalItem.path}

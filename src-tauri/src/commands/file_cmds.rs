@@ -18,16 +18,20 @@ pub struct DrawingData {
 
 #[tauri::command]
 pub fn read_drawing(path: String, state: State<'_, Mutex<AppState>>) -> Result<DrawingData, String> {
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
-    
+
     let full_path = resolve_vault_path(&vault.path, &path)?;
     let raw_content = read_file(&full_path)?;
     let content = inject_assets(&vault.path, &raw_content)?;
-    
+
     let metadata = fs::metadata(&full_path).map_err(|e| e.to_string())?;
-    let last_modified = metadata.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH)
-        .duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    let last_modified = metadata
+        .modified()
+        .unwrap_or(std::time::SystemTime::UNIX_EPOCH)
+        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
 
     let rel_path = relative_to_vault(&vault.path, &full_path)?;
 
@@ -40,9 +44,9 @@ pub fn read_drawing(path: String, state: State<'_, Mutex<AppState>>) -> Result<D
 
 #[tauri::command]
 pub fn save_drawing(path: String, content: String, state: State<'_, Mutex<AppState>>) -> Result<(), String> {
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
-    
+
     let full_path = resolve_vault_path(&vault.path, &path)?;
     let processed_content = extract_assets(&vault.path, &content)?;
 
@@ -61,25 +65,31 @@ pub fn save_drawing(path: String, content: String, state: State<'_, Mutex<AppSta
 
 #[tauri::command]
 pub fn create_drawing(name: String, folder: Option<String>, state: State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
-    
+
     let raw_name = name.trim();
-    if raw_name.is_empty() || raw_name.contains('/') || raw_name.contains('\\') || raw_name.contains("..") || raw_name.contains('\0') {
+    if raw_name.is_empty()
+        || raw_name == "."
+        || raw_name.contains('/')
+        || raw_name.contains('\\')
+        || raw_name.contains("..")
+        || raw_name.contains('\0')
+    {
         return Err("Invalid drawing file name".to_string());
     }
 
-    let file_name = if raw_name.ends_with(".excalidraw") { 
-        raw_name.to_string() 
-    } else { 
-        format!("{}.excalidraw", raw_name) 
+    let file_name = if raw_name.ends_with(".excalidraw") {
+        raw_name.to_string()
+    } else {
+        format!("{}.excalidraw", raw_name)
     };
 
     let folder_str = folder.unwrap_or_default();
     let full_dir = resolve_vault_path(&vault.path, &folder_str)?;
-    
+
     fs::create_dir_all(&full_dir).map_err(|e| e.to_string())?;
-    
+
     let rel_file = if folder_str.trim().is_empty() || folder_str == "." {
         file_name.clone()
     } else {
@@ -90,19 +100,25 @@ pub fn create_drawing(name: String, folder: Option<String>, state: State<'_, Mut
     };
 
     let full_path = resolve_vault_path(&vault.path, &rel_file)?;
-    
+    if full_path.exists() {
+        return Err(format!(
+            "A drawing named \"{}\" already exists",
+            file_name.trim_end_matches(".excalidraw")
+        ));
+    }
+
     let initial_content = r#"{"type":"excalidraw","version":2,"source":"excalideck","elements":[],"appState":{"zoom":{"value":1},"scrollX":0,"scrollY":0},"files":{}}"#;
     write_file_atomic(&full_path, initial_content)?;
-    
+
     let rel_path = relative_to_vault(&vault.path, &full_path)?;
     Ok(rel_path)
 }
 
 #[tauri::command]
 pub fn delete_file(path: String, state: State<'_, Mutex<AppState>>) -> Result<(), String> {
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
-    
+
     let full_path = resolve_vault_path(&vault.path, &path)?;
     let clean_full = strip_verbatim_prefix(&full_path);
     let clean_vault = strip_verbatim_prefix(&vault.path);
@@ -122,21 +138,31 @@ pub fn delete_file(path: String, state: State<'_, Mutex<AppState>>) -> Result<()
 #[tauri::command]
 #[allow(non_snake_case)]
 pub fn rename_file(oldPath: String, newName: String, state: State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
-    
-    if newName.is_empty() || newName.contains('/') || newName.contains('\\') || newName.contains("..") || newName.contains('\0') {
+
+    let trimmed_new = newName.trim();
+    if trimmed_new.is_empty()
+        || trimmed_new == "."
+        || trimmed_new.contains('/')
+        || trimmed_new.contains('\\')
+        || trimmed_new.contains("..")
+        || trimmed_new.contains('\0')
+    {
         return Err("Invalid new file name".to_string());
     }
 
     let old_full = resolve_vault_path(&vault.path, &oldPath)?;
+    if !old_full.exists() {
+        return Err(format!("Source \"{}\" does not exist", oldPath));
+    }
     let clean_old = strip_verbatim_prefix(&old_full);
     let clean_vault = strip_verbatim_prefix(&vault.path);
     if clean_old == clean_vault {
         return Err("Cannot rename root vault directory".to_string());
     }
 
-    let new_full = old_full.with_file_name(&newName);
+    let new_full = old_full.with_file_name(trimmed_new);
     let canonical_vault = vault.path.canonicalize().map_err(|e| e.to_string())?;
     if let Some(parent) = new_full.parent() {
         let canonical_parent = parent.canonicalize().map_err(|e| e.to_string())?;
@@ -145,8 +171,16 @@ pub fn rename_file(oldPath: String, newName: String, state: State<'_, Mutex<AppS
         }
     }
 
+    let is_case_only_rename = clean_old
+        .to_string_lossy()
+        .eq_ignore_ascii_case(&new_full.to_string_lossy())
+        && clean_old != new_full;
+    if new_full.exists() && !is_case_only_rename {
+        return Err(format!("\"{}\" already exists", trimmed_new));
+    }
+
     fs::rename(&old_full, &new_full).map_err(|e| e.to_string())?;
-    
+
     let rel_path = relative_to_vault(&vault.path, &new_full)?;
     Ok(rel_path)
 }
@@ -154,9 +188,9 @@ pub fn rename_file(oldPath: String, newName: String, state: State<'_, Mutex<AppS
 #[tauri::command]
 #[allow(non_snake_case)]
 pub fn move_file(src: String, destFolder: String, state: State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let state_guard = state.lock().unwrap();
+    let state_guard = state.lock().map_err(|e| format!("State lock error: {}", e))?;
     let vault = state_guard.vault.as_ref().ok_or("No vault open")?;
-    
+
     let src_full = resolve_vault_path(&vault.path, &src)?;
     if !src_full.exists() {
         return Err(format!("Source file does not exist: {}", src));
@@ -189,8 +223,12 @@ pub fn move_file(src: String, destFolder: String, state: State<'_, Mutex<AppStat
         return Err("Cannot move a folder into itself or its child directory".to_string());
     }
 
+    if dest_full.exists() {
+        return Err(format!("\"{}\" already exists in destination folder", file_name));
+    }
+
     fs::rename(&src_full, &dest_full).map_err(|e| format!("Failed to move file: {}", e))?;
-    
+
     let rel_path = relative_to_vault(&vault.path, &dest_full)?;
     Ok(rel_path)
 }

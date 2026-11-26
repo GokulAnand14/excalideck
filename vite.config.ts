@@ -1,5 +1,8 @@
+import fs from "fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+
+const pkg = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf-8"));
 
 // https://tauri.app/start/frontend/vite/
 const host = process.env.TAURI_DEV_HOST;
@@ -9,6 +12,7 @@ export default defineConfig(async () => ({
 
   define: {
     "process.env.IS_PREACT": JSON.stringify("false"),
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
 
   // Vite options tailored for Tauri development

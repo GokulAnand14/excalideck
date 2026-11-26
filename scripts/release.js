@@ -68,15 +68,26 @@ if (fs.existsSync(landingOsPath)) {
   let osTs = fs.readFileSync(landingOsPath, "utf-8");
   osTs = osTs.replace(/export const RELEASE_VERSION = '.*?';/, `export const RELEASE_VERSION = '${tag}';`);
   osTs = osTs.replace(/Excalideck_[\d.]+(?:-[\w.]+)?_/g, `Excalideck_${cleanVersion}_`);
+  osTs = osTs.replace(/Excalideck-[\d.]+-1\./g, `Excalideck-${cleanVersion}-1.`);
   fs.writeFileSync(landingOsPath, osTs);
   console.log(`✅ Updated landing/src/utils/os.ts -> ${tag}`);
+}
+
+// 5. Update README.md release download links
+const readmePath = path.join(rootDir, "README.md");
+if (fs.existsSync(readmePath)) {
+  let readme = fs.readFileSync(readmePath, "utf-8");
+  readme = readme.replace(/\/releases\/download\/v[\d.]+(?:-[\w.]+)?\//g, `/releases/download/${tag}/`);
+  readme = readme.replace(/Excalideck_[\d.]+(?:-[\w.]+)?_/g, `Excalideck_${cleanVersion}_`);
+  fs.writeFileSync(readmePath, readme);
+  console.log(`✅ Updated README.md -> ${tag}`);
 }
 
 console.log("\n📦 Committing version bump, tagging, and pushing to GitHub...");
 
 try {
   execSync(
-    `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock landing/src/utils/os.ts scripts/release.js`,
+    `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock landing/src/utils/os.ts README.md scripts/release.js`,
     { cwd: rootDir, stdio: "inherit" }
   );
 

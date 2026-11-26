@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FileTreeNode } from "../../types/fileTree";
+import { stripDrawingExtension } from "../../lib/constants";
 import { IconFolder, IconVault } from "../common/Icons";
 
 interface MoveModalProps {
@@ -17,7 +18,14 @@ export const MoveModal: React.FC<MoveModalProps> = ({
   onMove,
   onClose,
 }) => {
-  // Collect all folder paths in tree
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const getFolders = (node: FileTreeNode | null, acc: string[] = []): string[] => {
     if (!node) return acc;
     if (node.nodeType === "directory") {
@@ -34,13 +42,13 @@ export const MoveModal: React.FC<MoveModalProps> = ({
   };
 
   const allFolders = getFolders(tree);
-  // Filter out self and descendants if moving a folder
   const validFolders = allFolders.filter((f) => {
     if (!isFolder) return true;
     return f !== itemPath && !f.startsWith(itemPath + "/");
   });
 
-  const itemName = itemPath.split("/").pop()?.replace(".excalidraw", "") || itemPath;
+  const rawLeaf = itemPath.split("/").pop() || itemPath;
+  const itemName = isFolder ? rawLeaf : stripDrawingExtension(rawLeaf);
 
   const handleSelectFolder = (destFolder: string) => {
     onMove(itemPath, destFolder);
@@ -52,13 +60,12 @@ export const MoveModal: React.FC<MoveModalProps> = ({
       <div className="move-modal" onClick={(e) => e.stopPropagation()}>
         <div className="move-modal-header">
           <h3>Move "{itemName}" to...</h3>
-          <button className="move-modal-close" onClick={onClose}>
+          <button className="move-modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
 
         <div className="move-modal-list">
-          {/* Root Option */}
           <button
             className="move-modal-item root-item"
             onClick={() => handleSelectFolder("")}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { usePlatform } from "../../hooks/usePlatform";
+import { SaveStatus } from "../../hooks/useExcalidrawBridge";
+import { stripDrawingExtension } from "../../lib/constants";
 import { IconSidebar, IconSun, IconMoon } from "../common/Icons";
 
 import "./Titlebar.css";
@@ -10,6 +12,9 @@ interface TitlebarProps {
   vaultName?: string | null;
   sidebarOpen: boolean;
   theme: "light" | "dark";
+  saveStatus?: SaveStatus;
+  availableUpdateVersion?: string | null;
+  onOpenUpdate?: () => void;
   toggleSidebar: () => void;
   toggleTheme: () => void;
 }
@@ -19,6 +24,9 @@ export const Titlebar: React.FC<TitlebarProps> = ({
   vaultName,
   sidebarOpen,
   theme,
+  saveStatus = "idle",
+  availableUpdateVersion = null,
+  onOpenUpdate,
   toggleSidebar,
   toggleTheme,
 }) => {
@@ -83,29 +91,34 @@ export const Titlebar: React.FC<TitlebarProps> = ({
   };
 
   const displayName = fileName
-    ? fileName.split(/[/\\]/).pop()?.replace(".excalidraw", "")
+    ? stripDrawingExtension(fileName.split(/[/\\]/).pop() || fileName)
     : vaultName
     ? vaultName
     : "Excalideck";
+
+  const statusText =
+    fileName && saveStatus === "saving"
+      ? "Saving…"
+      : fileName && saveStatus === "error"
+      ? "Save error"
+      : null;
 
   return (
     <div
       className={`titlebar ${isMobile ? "is-mobile" : ""}`}
       data-tauri-drag-region={isDesktop ? "" : undefined}
     >
-      {/* Left: Sidebar Toggle */}
       <div className="titlebar-left" data-tauri-drag-region={isDesktop ? "" : undefined}>
         <button
           className={`titlebar-icon-btn ${sidebarOpen ? "active" : ""}`}
           onClick={toggleSidebar}
-          title={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+          title={sidebarOpen ? "Hide Sidebar (Ctrl+\\)" : "Show Sidebar (Ctrl+\\)"}
           aria-label={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
         >
           <IconSidebar size={isMobile ? 18 : 15} />
         </button>
       </div>
 
-      {/* Center: Current drawing name cleanly centered */}
       <div
         className="titlebar-center"
         data-tauri-drag-region={isDesktop ? "" : undefined}
@@ -117,10 +130,29 @@ export const Titlebar: React.FC<TitlebarProps> = ({
         >
           {displayName}
         </span>
+        {statusText && (
+          <span
+            className={`titlebar-save-status ${saveStatus}`}
+            data-tauri-drag-region={isDesktop ? "" : undefined}
+          >
+            {statusText}
+          </span>
+        )}
       </div>
 
-      {/* Right: Quick Action Controls + Windows Window Controls */}
       <div className="titlebar-right">
+        {availableUpdateVersion && onOpenUpdate && (
+          <button
+            className="titlebar-update-pill"
+            onClick={onOpenUpdate}
+            title={`Update to v${availableUpdateVersion} available`}
+            aria-label={`Update to v${availableUpdateVersion}`}
+          >
+            <span className="titlebar-update-dot" />
+            <span>v{availableUpdateVersion}</span>
+          </button>
+        )}
+
         <button
           className="titlebar-icon-btn"
           onClick={toggleTheme}
@@ -130,7 +162,6 @@ export const Titlebar: React.FC<TitlebarProps> = ({
           {theme === "light" ? <IconMoon size={14} /> : <IconSun size={14} />}
         </button>
 
-        {/* Windows-style Window Controls on the right */}
         {isDesktop && (
           <div className="window-controls">
             <button

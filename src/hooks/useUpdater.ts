@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { check, Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { getVersion } from "@tauri-apps/api/app";
+import { APP_VERSION_FALLBACK } from "../lib/constants";
+import { openExternalUrl } from "../lib/tauri";
+
+const SKIPPED_VERSION_KEY = "excalideck_skipped_update";
 
 export interface UpdateState {
   available: boolean;
@@ -15,25 +19,34 @@ export interface UpdateState {
   mode: "native" | "direct";
 }
 
-// Semver comparator: returns true if vRemote > vLocal
+// Semver comparator: returns true if vRemote > vLocal (handles pre-release tags)
 export function isNewerVersion(remote: string, current: string): boolean {
-  const cleanR = remote.replace(/^v/, "").trim();
-  const cleanC = current.replace(/^v/, "").trim();
+  const parseSemver = (v: string) => {
+    const clean = v.replace(/^v/, "").trim().split("+")[0];
+    const [core, pre] = clean.split("-", 2);
+    const nums = core.split(".").map((n) => parseInt(n, 10) || 0);
+    return {
+      major: nums[0] || 0,
+      minor: nums[1] || 0,
+      patch: nums[2] || 0,
+      pre: pre || null,
+    };
+  };
 
-  const rParts = cleanR.split(/[-+]/)[0].split(".").map((n) => parseInt(n, 10) || 0);
-  const cParts = cleanC.split(/[-+]/)[0].split(".").map((n) => parseInt(n, 10) || 0);
+  const r = parseSemver(remote);
+  const c = parseSemver(current);
 
-  const len = Math.max(rParts.length, cParts.length, 3);
-  for (let i = 0; i < len; i++) {
-    const r = rParts[i] || 0;
-    const c = cParts[i] || 0;
-    if (r > c) return true;
-    if (r < c) return false;
-  }
+  if (r.major !== c.major) return r.major > c.major;
+  if (r.minor !== c.minor) return r.minor > c.minor;
+  if (r.patch !== c.patch) return r.patch > c.patch;
+
+  // Stable release is newer than pre-release of the same core version
+  if (r.pre === null && c.pre !== null) return true;
+  if (r.pre !== null && c.pre === null) return false;
+  if (r.pre && c.pre) return r.pre.localeCompare(c.pre) > 0;
   return false;
 }
 
-// Detect operating system for binary matching
 function getPlatformAsset(assets: Array<{ name: string; browser_download_url: string }>): {
   url: string;
   name: string;
@@ -44,7 +57,6 @@ function getPlatformAsset(assets: Array<{ name: string; browser_download_url: st
   const isLinux = ua.includes("linux") && !isWindows && !isMac;
 
   if (isWindows) {
-    // Prefer setup .exe, fallback to .msi
     const exeAsset = assets.find((a) => a.name.endsWith(".exe"));
     if (exeAsset) return { url: exeAsset.browser_download_url, name: exeAsset.name };
     const msiAsset = assets.find((a) => a.name.endsWith(".msi"));
@@ -61,7 +73,6 @@ function getPlatformAsset(assets: Array<{ name: string; browser_download_url: st
     if (debAsset) return { url: debAsset.browser_download_url, name: debAsset.name };
   }
 
-  // Fallback: first available executable or installer asset
   const anyInstaller = assets.find(
     (a) =>
       a.name.endsWith(".exe") ||
@@ -75,9 +86,25 @@ function getPlatformAsset(assets: Array<{ name: string; browser_download_url: st
   return null;
 }
 
-export const useUpdater = () => {
-  const [currentVersion, setCurrentVersion] = useState<string>("0.1.8");
+function formatUpdateError(err: any): string {
+  const msg = String(err?.message || err || "");
+  if (msg.includes("403") || msg.includes("429")) {
+    return "GitHub API rate limit reached. Please try again in a few minutes.";
+  }
+  if (msg.includes("404")) {
+    return "No published releases found yet.";
+  }
+  if (/network|fetch|failed to fetch|offline|timeout/i.test(msg)) {
+    return "Unable to reach update server. Check your internet connection.";
+  }
+  return msg || "Unable to check for updates right now.";
+}
+
+export const useUpdater = (onBeforeRelaunch?: () => Promise<void>) => {
+  const [currentVersion, setCurrentVersion] = useState<string>(APP_VERSION_FALLBACK);
+  const currentVersionRef = useRef<string>(APP_VERSION_FALLBACK);
   const [updateState, setUpdateState] = useState<UpdateState | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [downloadProgress, setDownloadProgress] = useState<number>(0);
@@ -88,19 +115,32 @@ export const useUpdater = () => {
   const [lastCheckedAt, setLastCheckedAt] = useState<number | null>(null);
 
   const pendingNativeUpdateRef = useRef<Update | null>(null);
+  const onBeforeRelaunchRef = useRef(onBeforeRelaunch);
+  onBeforeRelaunchRef.current = onBeforeRelaunch;
 
-  // Initialize current version from Tauri app info
   useEffect(() => {
     getVersion()
       .then((ver) => {
-        if (ver) setCurrentVersion(ver);
+        if (ver) {
+          currentVersionRef.current = ver;
+          setCurrentVersion(ver);
+        }
       })
-      .catch(() => {
-        // Fallback already set to package version
-      });
+      .catch(() => {});
   }, []);
 
-  const isMobileClient = typeof navigator !== "undefined" && /ipad|iphone|ipod|android/i.test(navigator.userAgent);
+  const isMobileClient =
+    typeof navigator !== "undefined" && /ipad|iphone|ipod|android/i.test(navigator.userAgent);
+
+  const applyFoundUpdate = useCallback((nextUpdate: UpdateState, silent: boolean) => {
+    setUpdateState(nextUpdate);
+    setStatusMessage(null);
+    const skipped =
+      typeof localStorage !== "undefined" ? localStorage.getItem(SKIPPED_VERSION_KEY) : null;
+    if (!silent || skipped !== nextUpdate.version) {
+      setIsUpdateModalOpen(true);
+    }
+  }, []);
 
   const checkForUpdates = useCallback(
     async (silent: boolean = false) => {
@@ -115,41 +155,38 @@ export const useUpdater = () => {
       setError(null);
       if (!silent) setStatusMessage("Checking for updates...");
 
-      let appVer = currentVersion;
+      let appVer = currentVersionRef.current;
       try {
         const liveVer = await getVersion();
         if (liveVer) {
           appVer = liveVer;
+          currentVersionRef.current = liveVer;
           setCurrentVersion(liveVer);
         }
       } catch {}
 
       try {
-        console.log(`[Updater] Checking for updates (current: v${appVer})...`);
-
-        // Engine 1: Native Tauri v2 Plugin Updater Check
         try {
           const nativeUpdate = await check();
           if (nativeUpdate?.available) {
-            console.log("[Updater] Found native update:", nativeUpdate.version);
             pendingNativeUpdateRef.current = nativeUpdate;
-            setUpdateState({
-              available: true,
-              version: nativeUpdate.version.replace(/^v/, ""),
-              currentVersion: (nativeUpdate.currentVersion || appVer).replace(/^v/, ""),
-              body: nativeUpdate.body,
-              date: nativeUpdate.date,
-              mode: "native",
-            });
-            setLastCheckedAt(Date.now());
-            setIsChecking(false);
+            applyFoundUpdate(
+              {
+                available: true,
+                version: nativeUpdate.version.replace(/^v/, ""),
+                currentVersion: (nativeUpdate.currentVersion || appVer).replace(/^v/, ""),
+                body: nativeUpdate.body,
+                date: nativeUpdate.date,
+                mode: "native",
+              },
+              silent
+            );
             return;
           }
         } catch (nativeErr) {
-          console.log("[Updater] Native updater endpoint unavailable, checking GitHub Release API directly...", nativeErr);
+          console.log("[Updater] Native updater unavailable, checking GitHub API", nativeErr);
         }
 
-        // Engine 2: GitHub Releases API Fallback (Guaranteed to always work)
         const response = await fetch(
           `https://api.github.com/repos/GokulAnand14/excalideck/releases/latest?t=${Date.now()}`,
           {
@@ -167,36 +204,37 @@ export const useUpdater = () => {
         const remoteTag = release.tag_name || "";
         const remoteVer = remoteTag.replace(/^v/, "");
 
-        console.log(`[Updater] GitHub latest release: v${remoteVer} vs current: v${appVer}`);
-
         if (isNewerVersion(remoteVer, appVer)) {
           const matchedAsset = getPlatformAsset(release.assets || []);
-          console.log("[Updater] Matched installer asset:", matchedAsset);
-
           pendingNativeUpdateRef.current = null;
-          setUpdateState({
-            available: true,
-            version: remoteVer,
-            currentVersion: appVer,
-            body: release.body,
-            date: release.published_at,
-            downloadUrl: matchedAsset?.url,
-            fileName: matchedAsset?.name,
-            releaseUrl: release.html_url || `https://github.com/GokulAnand14/excalideck/releases/tag/v${remoteVer}`,
-            mode: "direct",
-          });
-          setStatusMessage(null);
+          applyFoundUpdate(
+            {
+              available: true,
+              version: remoteVer,
+              currentVersion: appVer,
+              body: release.body,
+              date: release.published_at,
+              downloadUrl: matchedAsset?.url,
+              fileName: matchedAsset?.name,
+              releaseUrl:
+                release.html_url ||
+                `https://github.com/GokulAnand14/excalideck/releases/tag/v${remoteVer}`,
+              mode: "direct",
+            },
+            silent
+          );
         } else {
           setUpdateState(null);
+          setIsUpdateModalOpen(false);
           pendingNativeUpdateRef.current = null;
           if (!silent) {
-            setStatusMessage(`You're up to date! Excalideck v${appVer} is the latest version.`);
+            setStatusMessage(`You're up to date on v${appVer}.`);
           }
         }
       } catch (e: any) {
         console.warn("[Updater] Check error:", e);
         if (!silent) {
-          setError(e?.message || "Failed to check for updates");
+          setError(formatUpdateError(e));
           setStatusMessage(null);
         }
       } finally {
@@ -204,7 +242,7 @@ export const useUpdater = () => {
         setIsChecking(false);
       }
     },
-    [currentVersion]
+    [isMobileClient, applyFoundUpdate]
   );
 
   const downloadAndInstall = useCallback(async () => {
@@ -217,7 +255,6 @@ export const useUpdater = () => {
     setDownloadTotal(0);
 
     try {
-      // 1. Native Tauri Installation
       if (updateState.mode === "native" && pendingNativeUpdateRef.current) {
         const update = pendingNativeUpdateRef.current;
         let downloaded = 0;
@@ -242,37 +279,57 @@ export const useUpdater = () => {
           }
         });
 
-        // Hot restart
+        try {
+          await onBeforeRelaunchRef.current?.();
+        } catch (flushErr) {
+          console.warn("[Updater] Pre-relaunch flush failed:", flushErr);
+        }
+
         await relaunch();
         return;
       }
 
-      // 2. Direct Release fallback: open official release in system browser
       const releasePage =
+        updateState.downloadUrl ||
         updateState.releaseUrl ||
         `https://github.com/GokulAnand14/excalideck/releases/tag/v${updateState.version}`;
-      window.open(releasePage, "_blank", "noopener,noreferrer");
+      await openExternalUrl(releasePage).catch(() => {
+        window.open(releasePage, "_blank", "noopener,noreferrer");
+      });
       setIsDownloading(false);
     } catch (e: any) {
       console.error("[Updater] Installation error:", e);
-      setError(e?.message || "Failed to process update.");
+      setError(formatUpdateError(e));
       setIsDownloading(false);
     }
   }, [updateState]);
 
   const dismissUpdate = useCallback(() => {
-    setUpdateState(null);
+    setIsUpdateModalOpen(false);
     setError(null);
-    setStatusMessage(null);
-    pendingNativeUpdateRef.current = null;
   }, []);
+
+  const skipUpdateVersion = useCallback(() => {
+    if (updateState?.version && typeof localStorage !== "undefined") {
+      localStorage.setItem(SKIPPED_VERSION_KEY, updateState.version);
+    }
+    setIsUpdateModalOpen(false);
+    setError(null);
+  }, [updateState?.version]);
+
+  const openUpdateModal = useCallback(() => {
+    if (updateState?.available) {
+      setError(null);
+      setIsUpdateModalOpen(true);
+    }
+  }, [updateState?.available]);
 
   const clearStatus = useCallback(() => {
     setStatusMessage(null);
     setError(null);
   }, []);
 
-  // Check silently on application mount (delayed by 2.5s)
+  // Run silent startup check once
   useEffect(() => {
     const timer = window.setTimeout(() => {
       checkForUpdates(true);
@@ -283,6 +340,7 @@ export const useUpdater = () => {
   return {
     currentVersion,
     updateState,
+    isUpdateModalOpen,
     isChecking,
     isDownloading,
     downloadProgress,
@@ -294,6 +352,8 @@ export const useUpdater = () => {
     checkForUpdates,
     downloadAndInstall,
     dismissUpdate,
+    skipUpdateVersion,
+    openUpdateModal,
     clearStatus,
   };
 };

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { UpdateState } from "../../hooks/useUpdater";
+import { formatBytes, formatReleaseDate, parseReleaseNotes } from "../../lib/releaseNotes";
 import { IconSparkles, IconAlertTriangle } from "./Icons";
 import "./UpdateModal.css";
 
@@ -12,6 +13,7 @@ interface UpdateModalProps {
   error: string | null;
   onInstall: () => void;
   onDismiss: () => void;
+  onSkipVersion?: () => void;
 }
 
 export const UpdateModal: React.FC<UpdateModalProps> = ({
@@ -23,67 +25,115 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   error,
   onInstall,
   onDismiss,
+  onSkipVersion,
 }) => {
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-  };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isDownloading) {
+        onDismiss();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDownloading, onDismiss]);
+
+  const releaseDate = useMemo(() => formatReleaseDate(update.date), [update.date]);
+  const noteLines = useMemo(() => parseReleaseNotes(update.body), [update.body]);
+
+  const installLabel = isDownloading
+    ? progress < 100
+      ? "Downloading..."
+      : "Installing..."
+    : update.mode === "native"
+    ? "Update & Restart"
+    : update.fileName
+    ? `Download ${update.fileName}`
+    : "Download Release ↗";
 
   return (
     <div className="update-modal-backdrop" onClick={!isDownloading ? onDismiss : undefined}>
-      <div className="update-modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
+      <div
+        className="update-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Update to Excalideck v${update.version}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="update-modal-header">
           <div className="update-icon-badge">
-            <IconSparkles size={20} />
+            <IconSparkles size={18} />
           </div>
           <div className="update-title-group">
-            <h3 className="update-title">Update Available</h3>
-            <p className="update-version-tag">
-              v{update.currentVersion} → <strong>v{update.version}</strong>
-            </p>
+            <h3 className="update-title">Software Update Ready</h3>
+            <div className="update-meta-row">
+              <span className="update-version-pill">
+                v{update.currentVersion} → <strong>v{update.version}</strong>
+              </span>
+              {releaseDate && <span className="update-release-date">{releaseDate}</span>}
+            </div>
           </div>
           {!isDownloading && (
-            <button className="update-close-btn" onClick={onDismiss} title="Dismiss">
+            <button
+              className="update-close-btn"
+              onClick={onDismiss}
+              title="Close (Esc)"
+              aria-label="Close"
+            >
               ✕
             </button>
           )}
         </div>
 
-        {/* Body */}
         <div className="update-modal-body">
-          {update.body ? (
+          {noteLines.length > 0 ? (
             <div className="update-changelog">
-              <span className="changelog-label">What's New:</span>
-              <div className="changelog-content">{update.body}</div>
+              <span className="changelog-label">Release Notes</span>
+              <div className="changelog-lines">
+                {noteLines.map((line, idx) =>
+                  line.kind === "heading" ? (
+                    <div key={idx} className="changelog-heading">
+                      {line.content}
+                    </div>
+                  ) : line.kind === "bullet" ? (
+                    <div key={idx} className="changelog-bullet">
+                      <span className="changelog-dot">•</span>
+                      <span>{line.content}</span>
+                    </div>
+                  ) : (
+                    <p key={idx} className="changelog-text">
+                      {line.content}
+                    </p>
+                  )
+                )}
+              </div>
             </div>
           ) : (
             <p className="update-desc">
-              A new version of Excalideck is ready to install with performance improvements and fixes.
+              Excalideck v{update.version} includes stability improvements, bug fixes, and performance updates.
             </p>
           )}
 
-          {/* Progress Bar during download */}
           {isDownloading && (
             <div className="update-progress-container">
               <div className="update-progress-info">
                 <span className="progress-label">
-                  {progress < 100 ? "Downloading update..." : "Installing & Restarting..."}
+                  {progress < 100
+                    ? "Downloading update package..."
+                    : "Verifying & restarting Excalideck..."}
                 </span>
-                <span className="progress-percent">{progress}%</span>
+                <span className="progress-percent">
+                  {totalBytes > 0 ? `${progress}%` : ""}
+                </span>
               </div>
               <div className="update-progress-bar-bg">
                 <div
-                  className="update-progress-bar-fill"
-                  style={{ width: `${Math.max(progress, 3)}%` }}
+                  className={`update-progress-bar-fill ${totalBytes === 0 ? "indeterminate" : ""}`}
+                  style={totalBytes > 0 ? { width: `${Math.max(progress, 3)}%` } : undefined}
                 />
               </div>
               {totalBytes > 0 && (
                 <span className="progress-bytes">
-                  {formatBytes(downloadedBytes)} / {formatBytes(totalBytes)}
+                  {formatBytes(downloadedBytes)} of {formatBytes(totalBytes)}
                 </span>
               )}
             </div>
@@ -91,30 +141,34 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
 
           {error && (
             <div className="update-error-banner">
-              <IconAlertTriangle size={15} />
+              <IconAlertTriangle size={15} className="update-error-icon" />
               <span>{error}</span>
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div className="update-modal-footer">
-          {!isDownloading && (
-            <button className="update-btn secondary" onClick={onDismiss}>
-              Later
+          <div className="update-footer-left">
+            {!isDownloading && onSkipVersion && (
+              <button className="update-skip-btn" onClick={onSkipVersion}>
+                Skip v{update.version}
+              </button>
+            )}
+          </div>
+          <div className="update-footer-actions">
+            {!isDownloading && (
+              <button className="update-btn secondary" onClick={onDismiss}>
+                Later
+              </button>
+            )}
+            <button
+              className="update-btn primary"
+              onClick={onInstall}
+              disabled={isDownloading}
+            >
+              {installLabel}
             </button>
-          )}
-          <button
-            className="update-btn primary"
-            onClick={onInstall}
-            disabled={isDownloading}
-          >
-            {isDownloading
-              ? "Updating..."
-              : update.mode === "native"
-              ? "Update & Restart"
-              : "Open Release Page ↗"}
-          </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { VaultInfo, RecentVault, AppConfig } from "../types/vault";
+import { VaultInfo, RecentVault, AppConfig, WorkspaceState } from "../types/vault";
 import { FileTreeNode } from "../types/fileTree";
 import { DrawingData } from "../types/drawing";
 
@@ -12,6 +12,7 @@ export interface PlatformInfo {
 }
 
 export const getPlatformInfo = () => invoke<PlatformInfo>("get_platform_info");
+export const openExternalUrl = (url: string) => invoke<void>("open_external_url", { url });
 
 // Vault commands
 export const openVault = (path: string) => invoke<VaultInfo>("open_vault", { path });
@@ -23,6 +24,9 @@ export const initDefaultVault = () => invoke<VaultInfo>("init_default_vault");
 export const getRecentVaults = () => invoke<RecentVault[]>("get_recent_vaults");
 export const closeVault = () => invoke("close_vault");
 export const revealInExplorer = (path: string) => invoke("reveal_in_explorer", { path });
+export const getWorkspaceState = () => invoke<WorkspaceState>("get_workspace_state");
+export const saveWorkspaceState = (workspace: WorkspaceState) =>
+  invoke<void>("save_workspace_state", { workspace });
 
 // File commands
 export const readDrawing = (path: string) => invoke<DrawingData>("read_drawing", { path });
@@ -40,10 +44,6 @@ export const createFolder = (path: string) => invoke("create_folder", { path });
 export const saveAsset = (id: string, data: string, mimeType: string) => invoke<string>("save_asset", { id, data, mimeType });
 export const getAssetPath = (id: string) => invoke<string | null>("get_asset_path", { id });
 
-
 // Config commands
 export const getAppConfig = () => invoke<AppConfig>("get_app_config");
 export const setAppConfig = (config: AppConfig) => invoke("set_app_config", { config });
-
-
-
